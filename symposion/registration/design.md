@@ -3,12 +3,12 @@
 ## Definitions
 - User has one 'active Cart' at a time. The Cart remains active until a paid Invoice is attached to it.
 - A 'paid Cart' is a Cart with a paid Invoice attached to it, where the Invoice has not been voided.
-- An Item is 'reserved' if:
-  - it belongs to an 
-  - it belongs to a paid Cart
 - An unpaid Cart is 'reserved' if 
  - CURRENT_TIME - "Time last updated" <= max(reservation duration of Products in Cart),
  - A Voucher was added and CURRENT_TIME - "Time last updated" < VOUCHER_RESERVATION_TIME (15 minutes?)
+- An Item is 'reserved' if:
+  - it belongs to a reserved Cart
+  - it belongs to a paid Cart
 - A Cart can have any number of Items added to it, subject to limits.
 
 
@@ -18,12 +18,20 @@
 - A Voucher is added to the Cart if the number of paid or reserved Carts containing the Voucher is less than the "total available" for the voucher.
 
 
+## Are products available? 
+
+- Availability is determined by the number of items we want to add to the cart: items_to_add
+
+- If items_to_add + count(Product in their active and paid Carts) > "Limit per user" for the Product, the Product is "unavailable".
+- If the Product belongs to an exhausted Ceiling, the Product is "unavailable".
+- Otherwise, the product is available
+
+
 ## Displaying Products:
 
 - If there is at least one EnablingCondition attached to the Product, display it only if at least one EnablingCondition is met
 - If there are zero EnablingConditions attached to the Product, display it
-- If the user has exceeded the "Limit per user" for the Product in their active and paid Carts, display it as "unavailable".
-- If the Product belongs to an exhausted Ceiling, display it as "unavailable".
+- If the product is not available for items_to_add=0, mark it as "unavailable"
 
 - If the Product is displayed and available, its price is the price for the Product, minus the greatest Discount available to this Cart and Product
 
@@ -39,19 +47,47 @@
 
 
 ## Exhausting Ceilings
+
+- Exhaustion is determined by the number of items we want to add to the cart: items_to_add
+
 - A ceiling is exhausted if:
  - Its start date has not yet been reached
  - Its end date has been exceeded
- - The sum of each total item 
+ - items_to_add + sum(paid and reserved Items for each Product in the ceiling) > Total available
 
 
 ## Adding Items to the Cart
 
-- Only Products that are displayed and not marked as "unavailable" may be added to a cart (i.e. revalidate display properties)
+- Products that are not displayed may not be added to a Cart
+- The requested number of items must be available for those items to be added to a Cart
 - If a different price applies to a Product when it is added to a cart, add at the new price, and display an alert to the user
+- Adding an item resets the "Time last updated" for the cart
 
 
+## Generating an invoice
 
+- User can ask to 'check out' the active Cart. Doing so generates an Invoice.
+- Checking out the active Cart resets the "Time last updated" for the cart. 
+- The invoice represents the current state of the cart.
+- If a new item is added to the cart, the invoice is voided.
+
+
+## Paying an invoice
+
+- A payment can only be attached to an invoice if all of the items in it are available at the time payment is processed
+
+### One-Shot
+- Update the "Time last updated" for the cart based on the expected time it takes for a payment to complete
+- Verify that all items are available, and if so:
+- Proceed to make payment
+- Apply payment record from amount received
+
+
+### Authorization-based approach:
+- Capture an authorization on the card
+- Verify that all items are available, and if so:
+- Apply payment record
+- Take payment
 
 
 
@@ -60,15 +96,22 @@
 ## Transaction Models
 
 - Cart:
+ - User
  - (Item = Product Instances)
  - (Voucher Instances)
  - Time last updated
 
 - Invoice:
+ - Invoice number
  - Cart
  - (Invoice Details)
- - Paid?
+ - {Payments}
  - Voided?
+
+- Payment
+ - Time
+ - Amount
+ - Reference
 
 
 ## Inventory Model
@@ -84,6 +127,7 @@
 
 
 - Voucher
+ - Description
  - Code
  - Total available
 
@@ -95,6 +139,7 @@
 
 
 - Ceiling
+ - Name
  - Start date
  - End date
  - Total available
@@ -104,7 +149,7 @@
 
 - Discount:
  - Description
- - {(Product, Amount, Percentage)}
+ - {DiscountForProduct}
 
  - Discount Types:
     - LimitedAvailabilityDiscount:
@@ -121,10 +166,14 @@
      * A discount that is available to a specific role *
      - Role
 
-    - InclusionDiscount:
+    - IncludedProductDiscount:
      * A discount that is available because another product has been purchased *
      - {Parent Product}
 
+- DiscountForProduct
+ - Product
+ - Amount
+ - Percentage
 
 
 - EnablingCondition:
