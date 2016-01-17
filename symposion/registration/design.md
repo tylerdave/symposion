@@ -81,7 +81,6 @@
  - Reservation duration
  - Display order
  - {Ceilings}
- - {EnablingConditions}
 
 
 - Voucher
@@ -93,7 +92,6 @@
  - Name
  - Display Order
  - Rendering Style
- - {EnablingConditions}
 
 
 - Ceiling
@@ -105,30 +103,47 @@
 ## Product Modifiers
 
 - Discount:
+ - Description
  - {(Product, Amount, Percentage)}
 
  - Discount Types:
     - LimitedAvailabilityDiscount:
+     * A discount that is available for a limited amount of time, e.g. Early Bird sales *
      - Start date
      - End date
      - Total available
 
     - VoucherDiscount:
+     * A discount that is available to a specific voucher *
      - Voucher
 
+    - RoleDiscount
+     * A discount that is available to a specific role *
+     - Role
+
     - InclusionDiscount:
+     * A discount that is available because another product has been purchased *
      - {Parent Product}
 
 
 
 - EnablingCondition:
+ - {Products}
+ - {Categories}
 
  - EnablingCondition Types:
    - ProductEnablingCondition:
+    * Enabling because the user has purchased a specific product *
     - {Products that enable}
 
+   - CategoryEnablingCondition:
+    * Enabling because the user has purchased a product in a specific category *
+    - {Categories that enable}
+
    - VoucherEnablingCondition:
+    * Enabling because the user has entered a voucher code *
      - Voucher
    
    - RoleEnablingCondition:
+     * Enabling because the user has a specific role *
      - Role
