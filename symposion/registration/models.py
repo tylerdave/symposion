@@ -152,3 +152,53 @@ class RoleDiscount(object):
     role. This is for e.g. volunteers who can get a discount ticket. '''
     ## TODO: implement RoleDiscount
     pass
+
+
+class EnablingConditionBase(models.Model):
+    ''' This defines a condition which allows products or categories to
+    be made visible. If there is at least one enabling condition defined
+    on a Product or Category, it will only be enabled if at least one
+    condition is met. '''
+
+    products = models.ManyToManyField(Product)
+    categories = models.ManyToManyField(Category)
+
+
+@python_2_unicode_compatible
+class ProductEnablingCondition(EnablingConditionBase):
+    ''' The condition is met because a specific product is purchased. '''
+
+    def __str__(self):
+        return "Enabled by product: "
+
+    product = models.ManyToManyField(Product, blank=False)
+
+
+@python_2_unicode_compatible
+class CategoryEnablingCondition(EnablingConditionBase):
+    ''' The condition is met because a product in a particular product is
+    purchased. '''
+
+    def __str__(self):
+        return "Enabled by product in category: "
+
+    category = models.ForeignKey(Category, blank=False)
+
+
+@python_2_unicode_compatible
+class VoucherEnablingCondition(EnablingConditionBase):
+    ''' The condition is met because a Voucher is present. This is for e.g.
+    enabling sponsor tickets. '''
+
+    def __str__(self):
+        return "Enabled by voucher: %s" % voucher
+
+    voucher = models.ForeignKey(Voucher, blank=False)
+
+
+#@python_2_unicode_compatible
+class RoleEnablingCondition(object):
+    ''' The condition is met because the active user has a particular Role.
+    This is for e.g. enabling Team tickets. '''
+    ## TODO: implement RoleEnablingCondition
+    pass
