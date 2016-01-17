@@ -3,3 +3,6 @@ _build
 dev.db
 site_media
 *.egg-info
+build
+dist
+*.DS_Store
