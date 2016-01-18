@@ -5,6 +5,8 @@ from django.utils import timezone
 
 from symposion.registration import models as rego
 
+from controllers import ProductController
+
 class CartController(object):
 
     def __init__(self, user):
@@ -33,17 +35,16 @@ class CartController(object):
         ''' Adds _quantity_ of the given _product_ to the cart. Raises
         ValidationError if constraints are violated.'''
 
-        # TODO: Check enabling conditions for product for user
-        # TODO: Check that ceilings are not violated
+        prod = ProductController(product)
 
-        ceilings = rego.Ceiling.objects.filter(products=product)
-        for ceiling in ceilings:
-            if not ceiling.will_not_violate_ceiling(product, quantity):
+        # TODO: Check enabling conditions for product for user
+
+        if not prod.can_add_within_ceilings(quantity):
                 raise ValidationError("Not enough of that product left")
 
-
-        if not product.user_can_add_within_limit(self.cart.user, quantity):
+        if not prod.user_can_add_within_limit(self.cart.user, quantity):
             raise ValidationError("Not enough of that product left")
+
         try:
             # Try to update an existing item within this cart if possible.
             product_item = rego.ProductItem.objects.get(

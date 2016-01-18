@@ -82,22 +82,6 @@ class Product(models.Model):
         verbose_name=_("Reservation duration"))
     order = models.PositiveIntegerField(verbose_name=("Display order"))
 
-    def user_can_add_within_limit(self, user, quantity):
-        ''' Return true if the user is able to add _quantity_ to their count of
-        this Product without exceeding _limit_per_user_.'''
-
-        carts = Cart.objects.filter(user=user)
-        items = ProductItem.objects.filter(product=self, cart=carts)
-
-        count = 0
-        for item in items:
-            count += item.quantity
-
-        if quantity + count > self.limit_per_user:
-            return False
-        else:
-            return True
-
 
 @python_2_unicode_compatible
 class Ceiling(models.Model):
@@ -111,30 +95,6 @@ class Ceiling(models.Model):
     end_time = models.DateTimeField(null=True, verbose_name=_("End time"))
     limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
     products = models.ManyToManyField(Product, verbose_name=("Products"))
-
-    def will_not_violate_ceiling(self, product, quantity):
-        ''' returns True if adding _quantity_ of _product_ will not vioilate
-        this ceiling. '''
-
-        if product not in self.products.all():
-            return True
-
-        # TODO: test start_time
-        # TODO: test end_time
-
-        # Test limits
-        count = 0
-        product_items = ProductItem.objects.filter(product=self.products.all())
-        for product_item in product_items:
-            if True:
-                # TODO: test that cart is paid or reserved
-                count += product_item.quantity
-        if count + quantity > self.limit:
-            return False
-
-        # All limits have been met
-        return True
-
 
 
 @python_2_unicode_compatible
