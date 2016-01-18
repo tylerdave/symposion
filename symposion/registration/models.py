@@ -84,20 +84,6 @@ class Product(models.Model):
 
 
 @python_2_unicode_compatible
-class Ceiling(models.Model):
-    ''' Registration product ceilings '''
-
-    def __str__(self):
-        return self.name
-
-    name = models.CharField(max_length=32, verbose_name=_("Ceiling name"))
-    start_time = models.DateTimeField(null=True, verbose_name=_("Start time"))
-    end_time = models.DateTimeField(null=True, verbose_name=_("End time"))
-    limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
-    products = models.ManyToManyField(Product, verbose_name=("Products"))
-
-
-@python_2_unicode_compatible
 class Voucher(models.Model):
     ''' Registration vouchers '''
 
@@ -165,7 +151,7 @@ class DiscountForCategory(models.Model):
     quantity = models.PositiveIntegerField()
 
 
-class LimitedAvailabilityDiscount(DiscountBase):
+class TimeOrStockLimitDiscount(DiscountBase):
     ''' Discounts that are generally available, but are limited by timespan or
     usage count. This is for e.g. Early Bird discounts. '''
 
@@ -203,14 +189,30 @@ class RoleDiscount(object):
     pass
 
 
+@python_2_unicode_compatible
 class EnablingConditionBase(models.Model):
     ''' This defines a condition which allows products or categories to
-    be made visible. If there is at least one enabling condition defined
-    on a Product or Category, it will only be enabled if at least one
-    condition is met. '''
+    be made visible. If there is at least one mandatory enabling condition
+    defined on a Product or Category, it will only be enabled if *all*
+    mandatory conditions are met, otherwise, if there is at least one enabling
+    condition defined on a Product or Category, it will only be enabled if at
+    least one condition is met. '''
 
+    def __str__(self):
+        return self.name
+
+    description = models.CharField(max_length=255)
+    mandatory = models.BooleanField(default=False)
     products = models.ManyToManyField(Product)
     categories = models.ManyToManyField(Category)
+
+
+class TimeOrStockLimitEnablingCondition(EnablingConditionBase):
+    ''' Registration product ceilings '''
+
+    start_time = models.DateTimeField(null=True, verbose_name=_("Start time"))
+    end_time = models.DateTimeField(null=True, verbose_name=_("End time"))
+    limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
 
 
 @python_2_unicode_compatible

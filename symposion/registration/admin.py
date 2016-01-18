@@ -39,7 +39,7 @@ class DiscountForCategoryInline(admin.TabularInline):
 
 
 @admin.register(
-    rego.LimitedAvailabilityDiscount,
+    rego.TimeOrStockLimitDiscount,
     rego.IncludedProductDiscount,
 )
 class DiscountAdmin(admin.ModelAdmin):

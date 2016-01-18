@@ -53,8 +53,9 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         )
         cls.PROD_2.save()
 
-        cls.CEIL_1 = rego.Ceiling.objects.create(
-            name="Ceiling 1",
+        cls.CEIL_1 = rego.TimeOrStockLimitEnablingCondition.objects.create(
+            description="Ceiling 1",
+            mandatory=True,
             limit=9,
         )
         cls.CEIL_1.save()

@@ -219,7 +219,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
  - {DiscountForCategory}
 
  - Discount Types:
-    - LimitedAvailabilityDiscount:
+    - TimeOrStockLimitDiscount:
      * A discount that is available for a limited amount of time, e.g. Early Bird sales *
      - Start date
      - End date
@@ -272,7 +272,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
      * Enabling because the user has a specific role *
      - Role
 
-   - LimitedAvailabilityEnablingCondition:
+   - TimeOrStockLimitEnablingCondition:
     * Enabling because a time condition has been met, or a number of items underneath it have not been sold *
     - Start date
     - End date

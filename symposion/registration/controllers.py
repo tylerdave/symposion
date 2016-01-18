@@ -26,7 +26,7 @@ class ProductController(object):
         of this Product without exceeding the ceilings the product is attached
         to. '''
 
-        ceilings = rego.Ceiling.objects.filter(products=self.product)
+        ceilings = rego.TimeOrStockLimitEnablingCondition.objects.filter(products=self.product)
         for ceiling in ceilings:
             ceil = CeilingController(ceiling)
             if not ceil.quantity_within_ceiling(self.product, quantity):
