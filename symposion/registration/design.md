@@ -16,6 +16,7 @@
 - Vouchers are attached to Carts
 - A user can enter codes for as many different Vouchers as they like.
 - A Voucher is added to the Cart if the number of paid or reserved Carts containing the Voucher is less than the "total available" for the voucher.
+- A cart is invalid if it contains a voucher that has been overused
 
 
 ## Are products available? 
@@ -187,6 +188,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
 
 - Product:
  - Name
+ - Description
  - Category
  - Price
  - Limit per user
@@ -203,6 +205,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
 
 - Category?
  - Name
+ - Description
  - Display Order
  - Rendering Style
 
