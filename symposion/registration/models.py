@@ -171,7 +171,7 @@ class ProductEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by product: "
 
-    product = models.ManyToManyField(Product, blank=False)
+    product = models.ManyToManyField(Product)
 
 
 @python_2_unicode_compatible
@@ -182,7 +182,7 @@ class CategoryEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by product in category: "
 
-    category = models.ForeignKey(Category, blank=False)
+    category = models.ForeignKey(Category)
 
 
 @python_2_unicode_compatible
@@ -193,7 +193,7 @@ class VoucherEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by voucher: %s" % voucher
 
-    voucher = models.ForeignKey(Voucher, blank=False)
+    voucher = models.ForeignKey(Voucher)
 
 
 #@python_2_unicode_compatible
@@ -202,3 +202,60 @@ class RoleEnablingCondition(object):
     This is for e.g. enabling Team tickets. '''
     ## TODO: implement RoleEnablingCondition
     pass
+
+
+# Commerce Models
+
+class Cart(models.Model):
+    ''' Represents a set of product items that have been purchased, or are
+    pending purchase. '''
+
+    user = models.ForeignKey(User)
+    # ProductItems (foreign key)
+    vouchers = models.ManyToManyField(Voucher, blank=True)
+    discounts = models.ManyToManyField(DiscountBase, blank=True)
+    time_last_updated = models.DateTimeField()
+    revision = models.PositiveIntegerField()
+    active = models.BooleanField(default=True)
+
+
+class ProductItem(models.Model):
+    ''' Represents a product-quantity pair in a Cart. '''
+
+    cart = models.ForeignKey(Cart)
+    product = models.ForeignKey(Product)
+    quantity = models.PositiveIntegerField()
+
+
+class Invoice(models.Model):
+    ''' An invoice. Invoices can be automatically generated when checking out
+    a Cart, in which case, it is attached to a given revision of a Cart. '''
+
+    # Invoice Number
+    user = models.ForeignKey(User)
+    cart = models.ForeignKey(Cart, blank=True)
+    cart_revision = models.IntegerField()
+    # Line Items (foreign key)
+    void = models.BooleanField(default=False)
+    paid = models.BooleanField(default=False)
+
+
+class LineItem(models.Model):
+    ''' Line items for an invoice. These are denormalised from the ProductItems
+    that belong to a cart (for consistency), but also allow for arbitrary line
+    items when required. '''
+
+    invoice = models.ForeignKey(Invoice)
+    description = models.CharField(max_length=255)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=8, decimal_places=2)
+
+
+class Payment(models.Model):
+    ''' A payment for an invoice. Each invoice can have multiple payments
+    attached to it.'''
+
+    invoice = models.ForeignKey(Invoice)
+    time = models.DateTimeField()
+    reference = models.CharField(max_length=64)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
