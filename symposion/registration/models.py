@@ -163,7 +163,7 @@ class VoucherDiscount(DiscountBase):
     ''' Discounts that are enabled when a voucher code is in the current
     cart. '''
 
-    voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE,
+    voucher = models.OneToOneField(Voucher, on_delete=models.CASCADE,
         verbose_name=_("Voucher"))
 
 
@@ -221,7 +221,7 @@ class VoucherEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by voucher: %s" % voucher
 
-    voucher = models.ForeignKey(Voucher)
+    voucher = models.OneToOneField(Voucher)
 
 
 #@python_2_unicode_compatible
