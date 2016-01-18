@@ -16,16 +16,26 @@ from symposion.proposals.models import ProposalBase
 
 # User models
 
+@python_2_unicode_compatible
 class Profile(models.Model):
     ''' Miscellaneous user-related data. '''
+
+    def __str__(self):
+        return "%s" % self.user
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     # Badge is linked
     completed_registration = models.BooleanField(default=False)
     highest_complete_category = models.IntegerField(default=0)
 
 
+@python_2_unicode_compatible
 class Badge(models.Model):
     ''' Information for an attendee's badge. '''
+
+    def __str__(self):
+        return "Badge for: %s of %s" % (self.name, self.company)
+
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE)
 
     name = models.CharField(max_length=256)
@@ -223,9 +233,13 @@ class RoleEnablingCondition(object):
 
 # Commerce Models
 
+@python_2_unicode_compatible
 class Cart(models.Model):
     ''' Represents a set of product items that have been purchased, or are
     pending purchase. '''
+
+    def __str__(self):
+        return "Cart: %d rev #%d" % (self.id, self.revision)
 
     user = models.ForeignKey(User)
     # ProductItems (foreign key)
@@ -236,17 +250,26 @@ class Cart(models.Model):
     active = models.BooleanField(default=True)
 
 
+@python_2_unicode_compatible
 class ProductItem(models.Model):
     ''' Represents a product-quantity pair in a Cart. '''
+
+    def __str__(self):
+        return "product: %s * %d in Cart: %s" % (
+            self.product, self.quantity, self.cart)
 
     cart = models.ForeignKey(Cart)
     product = models.ForeignKey(Product)
     quantity = models.PositiveIntegerField()
 
 
+@python_2_unicode_compatible
 class Invoice(models.Model):
     ''' An invoice. Invoices can be automatically generated when checking out
     a Cart, in which case, it is attached to a given revision of a Cart. '''
+
+    def __str__(self):
+        return "Invoice #%d" % self.id
 
     # Invoice Number
     user = models.ForeignKey(User)
@@ -257,10 +280,15 @@ class Invoice(models.Model):
     paid = models.BooleanField(default=False)
 
 
+@python_2_unicode_compatible
 class LineItem(models.Model):
     ''' Line items for an invoice. These are denormalised from the ProductItems
     that belong to a cart (for consistency), but also allow for arbitrary line
     items when required. '''
+
+    def __str__(self):
+        return "Line: %s * %d @ %s" % (
+            self.description, self.quantity, self.price)
 
     invoice = models.ForeignKey(Invoice)
     description = models.CharField(max_length=255)
@@ -268,9 +296,13 @@ class LineItem(models.Model):
     price = models.DecimalField(max_digits=8, decimal_places=2)
 
 
+@python_2_unicode_compatible
 class Payment(models.Model):
     ''' A payment for an invoice. Each invoice can have multiple payments
     attached to it.'''
+
+    def __str__(self):
+        return "Payment: ref=%s amount=%s" % (self.reference, self.amount)
 
     invoice = models.ForeignKey(Invoice)
     time = models.DateTimeField()
