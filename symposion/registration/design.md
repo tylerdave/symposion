@@ -61,15 +61,18 @@
 - Products that are not displayed may not be added to a Cart
 - The requested number of items must be available for those items to be added to a Cart
 - If a different price applies to a Product when it is added to a cart, add at the new price, and display an alert to the user
+- If a discount is used when adding a Product to the cart, add the discount as well
 - Adding an item resets the "Time last updated" for the cart
+- Each time carts have items added or removed, the revision number is updated
 
 
 ## Generating an invoice
 
-- User can ask to 'check out' the active Cart. Doing so generates an Invoice.
+- User can ask to 'check out' the active Cart. Doing so generates an Invoice. The invoice corresponds to a revision number of the cart.
 - Checking out the active Cart resets the "Time last updated" for the cart. 
 - The invoice represents the current state of the cart.
-- If a new item is added to the cart, the invoice is voided.
+- If the revision number for the cart is different to the cart's revision number for the invoice, the invoice is void.
+- The invoice is void if 
 
 
 ## Paying an invoice
@@ -136,23 +139,42 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
 1. Ask for payment
 
 
-# Models
+# User Models
+
+- Profile:
+ - User
+ - Has done guided registration?
+ - Badge
+ - 
 
 ## Transaction Models
 
 - Cart:
  - User
- - (Item = Product Instances)
- - (Voucher Instances)
- - (Discount Instances)
+ - {Items}
+ - {Voucher}
+ - {Discount}
  - Time last updated
+ - Revision Number
+ - Active?
+
+- Item
+ - Product
+ - Quantity
 
 - Invoice:
  - Invoice number
+ - User
  - Cart
+ - Cart Revision
+ - {Line Items}
  - (Invoice Details)
  - {Payments}
  - Voided?
+
+- LineItem
+ - Description 
+ - Price
 
 - Payment
  - Time
