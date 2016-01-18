@@ -126,9 +126,9 @@ class DiscountBase(models.Model):
 
 @python_2_unicode_compatible
 class DiscountForProduct(models.Model):
-    ''' Represents a discount for an individual product. Each discount can
-    contain multiple products. Discounts can either be a percentage or a
-    fixed amount, but not both. '''
+    ''' Represents a discount on an individual product. Each Discount can
+    contain multiple products and categories. Discounts can either be a
+    percentage or a fixed amount, but not both. '''
 
     def __str__(self):
         if self.percentage:
@@ -148,6 +148,16 @@ class DiscountForProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     percentage = models.DecimalField(max_digits=4, decimal_places=1, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True)
+
+
+@python_2_unicode_compatible
+class DiscountForCategory(models.Model):
+    ''' Represents a discount for a category of products. Each discount can
+    contain multiple products. Category discounts can only be a percentage. '''
+
+    discount = models.ForeignKey(DiscountBase, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    percentage = models.DecimalField(max_digits=4, decimal_places=1, blank=True)
 
 
 class LimitedAvailabilityDiscount(DiscountBase):
