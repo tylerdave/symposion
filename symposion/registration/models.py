@@ -82,6 +82,22 @@ class Product(models.Model):
         verbose_name=_("Reservation duration"))
     order = models.PositiveIntegerField(verbose_name=("Display order"))
 
+    def user_can_add_within_limit(self, user, quantity):
+        ''' Return true if the user is able to add _quantity_ to their count of
+        this Product without exceeding _limit_per_user_.'''
+
+        carts = Cart.objects.filter(user=user)
+        items = ProductItem.objects.filter(product=self, cart=carts)
+
+        count = 0
+        for item in items:
+            count += item.quantity
+
+        if quantity + count > self.limit_per_user:
+            return False
+        else:
+            return True
+
 
 @python_2_unicode_compatible
 class Ceiling(models.Model):

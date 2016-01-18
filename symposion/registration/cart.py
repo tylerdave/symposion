@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 
 from django.utils import timezone
 
@@ -27,3 +28,22 @@ class CartController(object):
         determine whether the cart has reserved the items and discounts it
         holds. '''
         self.cart.time_last_updated = timezone.now()
+
+    def add_to_cart(self, product, quantity):
+        ''' Adds _quantity_ of the given _product_ to the cart. Raises
+        ValidationError if constraints are violated.'''
+
+        # TODO: Check enabling conditions for product for user
+        # TODO: Check that ceilings are not violated
+
+        if not product.user_can_add_within_limit(self.cart.user, quantity):
+            raise ValidationError("Not enough of that product left")
+
+        product_item = rego.ProductItem.objects.create(
+            cart=self.cart,
+            product=product,
+            quantity=quantity,
+        )
+        product_item.save()
+        self._update_time_last_updated()
+        self.cart.save()
