@@ -66,19 +66,6 @@ class Category(models.Model):
 
 
 @python_2_unicode_compatible
-class Ceiling(models.Model):
-    ''' Registration product ceilings '''
-
-    def __str__(self):
-        return self.name
-
-    name = models.CharField(max_length=32, verbose_name=_("Ceiling name"))
-    start_time = models.DateTimeField(blank=True, verbose_name=_("Start time"))
-    end_time = models.DateTimeField(blank=True, verbose_name=_("End time"))
-    limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
-
-
-@python_2_unicode_compatible
 class Product(models.Model):
     ''' Registration products '''
 
@@ -90,9 +77,24 @@ class Product(models.Model):
     category = models.ForeignKey(Category, verbose_name=_("Product category"))
     price = models.DecimalField(max_digits=8, decimal_places=2, verbose_name=_("Price"))
     limit_per_user = models.PositiveIntegerField(blank=True, verbose_name=_("Limit per user"))
-    reservation_duration = models.DurationField(verbose_name=_("Reservation duration"))
+    reservation_duration = models.DurationField(
+        default=datetime.timedelta(hours=1),
+        verbose_name=_("Reservation duration"))
     order = models.PositiveIntegerField(verbose_name=("Display order"))
-    ceilings = models.ManyToManyField(Ceiling, blank=True, verbose_name=("Product ceilings"))
+
+
+@python_2_unicode_compatible
+class Ceiling(models.Model):
+    ''' Registration product ceilings '''
+
+    def __str__(self):
+        return self.name
+
+    name = models.CharField(max_length=32, verbose_name=_("Ceiling name"))
+    start_time = models.DateTimeField(blank=True, verbose_name=_("Start time"))
+    end_time = models.DateTimeField(blank=True, verbose_name=_("End time"))
+    limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
+    products = models.ManyToManyField(Product, verbose_name=("Products"))
 
 
 @python_2_unicode_compatible
