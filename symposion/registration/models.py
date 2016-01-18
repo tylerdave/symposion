@@ -14,6 +14,23 @@ from symposion.markdown_parser import parse
 from symposion.proposals.models import ProposalBase
 
 
+# User models
+
+class Profile(models.Model):
+    ''' Miscellaneous user-related data. '''
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # Badge is linked
+    completed_registration = models.BooleanField(default=False)
+    highest_complete_category = models.IntegerField(default=0)
+
+
+class Badge(models.Model):
+    ''' Information for an attendee's badge. '''
+    profile = models.OneToOneField(Profile, on_delete=models.CASCADE)
+
+    name = models.CharField(max_length=256)
+    company = models.CharField(max_length=256)
+
 
 # Inventory Models
 
