@@ -173,7 +173,8 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
  - Voided?
 
 - LineItem
- - Description 
+ - Description
+ - Quantity 
  - Price
 
 - Payment
