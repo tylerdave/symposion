@@ -115,6 +115,7 @@ class AddToCartTestCase(TestCase):
         else:
             raise AssertionError("Was able to exceed per-user limit over multiple carts")
 
+    
     def test_add_to_cart_ceiling_limit(self):
         current_cart = CartController(self.user)
 
