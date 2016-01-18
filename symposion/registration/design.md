@@ -1,4 +1,4 @@
-# Workflow
+# Logic
 
 ## Definitions
 - User has one 'active Cart' at a time. The Cart remains active until a paid Invoice is attached to it.
@@ -90,6 +90,51 @@
 - Take payment
 
 
+# Registration workflow:
+
+## User has not taken a guided registration yet:
+
+User is shown two options:
+
+1. Undertake guided registration ("for current user")
+1. Purchase vouchers
+
+
+## User has not purchased a ticket, and wishes to:
+
+This gives the user a guided registration process. 
+
+1. Take list of categories, sorted by display order, and display the next lowest enabled & available category
+1. Take user to category page 
+1. User can click "back" to go to previous screen, or "next" to go the next lowest enabled & available category
+
+Once all categories have been seen:
+1. Ask for badge information -- badge information is *not* the same as the invoicee.
+1. User is taken to the "user has purchased a ticket" workflow
+
+
+## User is buying vouchers
+TODO: Consider separate workflow for purchasing ticket vouchers.
+
+
+## User has completed a guided registration or purchased vouchers
+
+1. Show list of products that are pending purchase.
+1. Show list of categories + badge information, as well as 'checkout' button if the user has items in their current cart
+
+
+## Category page
+
+- User can enter a voucher at any time
+- User is shown the list of products that have been paid for
+- User has the option to add/remove products that are in the current cart
+
+
+## Checkout
+
+1. Ask for invoicing details (pre-fill from previous invoice?)
+1. Ask for payment
+
 
 # Models
 
@@ -99,6 +144,7 @@
  - User
  - (Item = Product Instances)
  - (Voucher Instances)
+ - (Discount Instances)
  - Time last updated
 
 - Invoice:
@@ -149,6 +195,7 @@
 
 - Discount:
  - Description
+ - Reuse limit
  - {DiscountForProduct}
 
  - Discount Types:
