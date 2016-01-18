@@ -30,6 +30,7 @@
 
 ## Displaying Products:
 
+- If there is at least one mandatory EnablingCondition attached to the Product, display it only if all EnablingConditions are met
 - If there is at least one EnablingCondition attached to the Product, display it only if at least one EnablingCondition is met
 - If there are zero EnablingConditions attached to the Product, display it
 - If the product is not available for items_to_add=0, mark it as "unavailable"
@@ -210,13 +211,6 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
  - Rendering Style
 
 
-- Ceiling
- - Name
- - Start date
- - End date
- - Total available
-
-
 ## Product Modifiers
 
 - Discount:
@@ -256,6 +250,8 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
 
 
 - EnablingCondition:
+ - Description
+ - Mandatory?
  - {Products}
  - {Categories}
 
@@ -275,3 +271,9 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
    - RoleEnablingCondition:
      * Enabling because the user has a specific role *
      - Role
+
+   - LimitedAvailabilityEnablingCondition:
+    * Enabling because a time condition has been met, or a number of items underneath it have not been sold *
+    - Start date
+    - End date
+    - Total available
