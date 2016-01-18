@@ -50,6 +50,21 @@ class AddToCartTestCase(TestCase):
         self.assertEqual(current_cart.cart, current_cart2.cart)
 
 
+    def test_add_to_cart_collapses_product_items(self):
+        current_cart = CartController(self.user)
+
+        # Add a product twice
+        current_cart.add_to_cart(self.PROD_1, 1)
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+        ## Count of products for a given user should be collapsed.
+        items = rego.ProductItem.objects.filter(cart=current_cart.cart,
+            product=self.PROD_1)
+        self.assertEqual(1, len(items))
+        item = items[0]
+        self.assertEquals(2, item.quantity)
+
+
     def test_add_to_cart_per_user_limit(self):
         current_cart = CartController(self.user)
 
@@ -67,6 +82,7 @@ class AddToCartTestCase(TestCase):
             pass
         else:
             raise AssertionError("Was able to exceed per-user limit on one cart")
+
 
         current_cart.cart.active = False
         current_cart.cart.save()

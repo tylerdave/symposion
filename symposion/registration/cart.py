@@ -39,11 +39,19 @@ class CartController(object):
         if not product.user_can_add_within_limit(self.cart.user, quantity):
             raise ValidationError("Not enough of that product left")
 
-        product_item = rego.ProductItem.objects.create(
-            cart=self.cart,
-            product=product,
-            quantity=quantity,
-        )
+        try:
+            # Try to update an existing item within this cart if possible.
+            product_item = rego.ProductItem.objects.get(
+                cart=self.cart,
+                product=product)
+            product_item.quantity += quantity
+        except ObjectDoesNotExist:
+            product_item = rego.ProductItem.objects.create(
+                cart=self.cart,
+                product=product,
+                quantity=quantity,
+            )
         product_item.save()
+        
         self._update_time_last_updated()
         self.cart.save()
