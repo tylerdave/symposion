@@ -266,7 +266,7 @@ class Cart(models.Model):
     vouchers = models.ManyToManyField(Voucher, blank=True)
     discounts = models.ManyToManyField(DiscountBase, blank=True)
     time_last_updated = models.DateTimeField()
-    revision = models.PositiveIntegerField()
+    revision = models.PositiveIntegerField(default=1)
     active = models.BooleanField(default=True)
 
 
