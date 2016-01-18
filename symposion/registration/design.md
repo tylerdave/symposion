@@ -221,8 +221,8 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
 
 - Discount:
  - Description
- - Reuse limit
  - {DiscountForProduct}
+ - {DiscountForCategory}
 
  - Discount Types:
     - LimitedAvailabilityDiscount:
@@ -247,6 +247,12 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
  - Product
  - Amount
  - Percentage
+ - Quantity
+
+- DiscountForCategory
+ - Category
+ - Percentage
+ - Quantity
 
 
 - EnablingCondition:
