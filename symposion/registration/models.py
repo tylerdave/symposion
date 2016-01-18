@@ -120,8 +120,6 @@ class DiscountBase(models.Model):
 
     description = models.CharField(max_length=255,
         verbose_name=_("Description"))
-    reuse_limit = models.PositiveIntegerField(
-        verbose_name=_("Usage limit per user"))
 
 
 @python_2_unicode_compatible
@@ -132,9 +130,9 @@ class DiscountForProduct(models.Model):
 
     def __str__(self):
         if self.percentage:
-            return "%s%% off %s" % (self.percentage, self.Product)
+            return "%s%% off %s" % (self.percentage, self.product)
         elif self.price:
-            return "$%s off %s" % (self.price, self.Product)
+            return "$%s off %s" % (self.price, self.product)
 
     def clean(self):
         if self.percentage is None and self.price is None:
@@ -148,6 +146,7 @@ class DiscountForProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     percentage = models.DecimalField(max_digits=4, decimal_places=1, blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True)
+    quantity = models.PositiveIntegerField()
 
 
 @python_2_unicode_compatible
@@ -155,14 +154,21 @@ class DiscountForCategory(models.Model):
     ''' Represents a discount for a category of products. Each discount can
     contain multiple products. Category discounts can only be a percentage. '''
 
+    def __str__(self):
+        return "%s%% off %s" % (self.percentage, self.category)
+
     discount = models.ForeignKey(DiscountBase, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     percentage = models.DecimalField(max_digits=4, decimal_places=1, blank=True)
+    quantity = models.PositiveIntegerField()
 
 
 class LimitedAvailabilityDiscount(DiscountBase):
     ''' Discounts that are generally available, but are limited by timespan or
     usage count. This is for e.g. Early Bird discounts. '''
+
+    class Meta:
+        verbose_name = _("Promotional discount")
 
     start_time = models.DateTimeField(blank=True, verbose_name=_("Start time"))
     end_time = models.DateTimeField(blank=True, verbose_name=_("End time"))
@@ -180,6 +186,9 @@ class VoucherDiscount(DiscountBase):
 class IncludedProductDiscount(DiscountBase):
     ''' Discounts that are enabled because another product has been purchased.
     e.g. A conference ticket includes a free t-shirt. '''
+
+    class Meta:
+        verbose_name = _("Product inclusion")
 
     product = models.ManyToManyField(Product,
         verbose_name=_("Including product"))
