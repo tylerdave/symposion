@@ -36,9 +36,14 @@ class CartController(object):
         # TODO: Check enabling conditions for product for user
         # TODO: Check that ceilings are not violated
 
+        ceilings = rego.Ceiling.objects.filter(products=product)
+        for ceiling in ceilings:
+            if not ceiling.will_not_violate_ceiling(product, quantity):
+                raise ValidationError("Not enough of that product left")
+
+
         if not product.user_can_add_within_limit(self.cart.user, quantity):
             raise ValidationError("Not enough of that product left")
-
         try:
             # Try to update an existing item within this cart if possible.
             product_item = rego.ProductItem.objects.get(
@@ -52,6 +57,6 @@ class CartController(object):
                 quantity=quantity,
             )
         product_item.save()
-        
+
         self._update_time_last_updated()
         self.cart.save()

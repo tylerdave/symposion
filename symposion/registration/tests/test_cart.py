@@ -34,6 +34,25 @@ class AddToCartTestCase(TestCase):
         )
         cls.PROD_1.save()
 
+        cls.PROD_2 = rego.Product.objects.create(
+            name="Product 2",
+            description= "This is a test product. It costs $10. " \
+                "A user may have 10 of them.",
+            category=cls.CAT_1,
+            price=Decimal("10.00"),
+            limit_per_user=10,
+            order=10,
+        )
+        cls.PROD_2.save()
+
+        cls.CEIL_1 = rego.Ceiling.objects.create(
+            name="Ceiling 1",
+            limit=9,
+        )
+        cls.CEIL_1.save()
+        cls.CEIL_1.products.add(cls.PROD_1, cls.PROD_2)
+        cls.CEIL_1.save()
+
 
     def test_get_cart(self):
         current_cart = CartController(self.user)
@@ -83,7 +102,6 @@ class AddToCartTestCase(TestCase):
         else:
             raise AssertionError("Was able to exceed per-user limit on one cart")
 
-
         current_cart.cart.active = False
         current_cart.cart.save()
 
@@ -96,3 +114,30 @@ class AddToCartTestCase(TestCase):
             pass
         else:
             raise AssertionError("Was able to exceed per-user limit over multiple carts")
+
+    def test_add_to_cart_ceiling_limit(self):
+        current_cart = CartController(self.user)
+
+        # User should not be able to add 10 of PROD_1 to the current cart
+        # because it is affected by CEIL_1
+        try:
+            current_cart.add_to_cart(self.PROD_2, 10)
+        except ValidationError:
+            pass
+        else:
+            raise AssertionError("Was able to exceed ceiling limit over single product")
+
+        # User should be able to add 5 of PROD_1 to the current cart
+        current_cart.add_to_cart(self.PROD_1, 5)
+
+        # User should not be able to add 10 of PROD_2 to the current cart
+        # because it is affected by CEIL_1
+        try:
+            current_cart.add_to_cart(self.PROD_2, 10)
+        except ValidationError:
+            pass
+        else:
+            raise AssertionError("Was able to exceed ceiling limit over multiple products")
+
+        # User should be able to add 5 of PROD_2 to the current cart
+        current_cart.add_to_cart(self.PROD_2, 4)
