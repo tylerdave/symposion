@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Avg, Min, Max, Sum
 
 from symposion.registration import models as rego
 
@@ -56,23 +57,49 @@ class InvoiceController(object):
 
         return invoice
 
+
     def is_valid(self):
         ''' Returns true if the attached invoice is not void and it represents
         a valid cart. '''
-        return False
+        if self.invoice.void:
+            return False
+        if self.invoice.cart is not None:
+            if self.invoice.cart.revision != self.invoice.cart_revision:
+                return False
+        return True
+
 
     def void(self):
         ''' Voids the invoice. '''
-        pass
+        self.invoice.void = True
+
 
     def pay(self, reference, amount):
         ''' Pays the invoice by the given amount. If the payment
         equals the total on the invoice, finalise the invoice.
         (NB should be transactional.)
         '''
-        pass
+        if self.invoice.cart is not None:
+            cart = CartController(self.invoice.cart)
+            cart.validate_cart() # Raises ValidationError if invalid
 
-    def _finalise(self):
-        ''' Marks the invoice as paid, and marks the cart it is attached to as
-        inactive. '''
-        pass
+        ''' Adds a payment '''
+        payment = rego.Payment.objects.create(
+            invoice=self.invoice,
+            reference=reference,
+            amount=amount,
+        )
+        payment.save()
+
+        payments = rego.Payment.objects .filter(invoice=self.invoice)
+        agg = payments.aggregate(Sum("amount"))
+        total = agg["amount__sum"]
+
+        if total==self.invoice.value:
+            self.invoice.paid = True
+
+            cart = self.invoice.cart
+            cart.active = False
+            cart.save()
+
+            self.invoice.save()

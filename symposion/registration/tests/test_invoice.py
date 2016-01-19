@@ -56,3 +56,20 @@ class InvoiceTestCase(RegistrationCartTestCase):
         # Now try to invoice the first user
         with self.assertRaises(ValidationError):
             InvoiceController.for_cart(current_cart.cart)
+
+    def test_paying_invoice_makes_new_cart(self):
+        current_cart = CartController.for_user(self.USER_1)
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+        invoice = InvoiceController.for_cart(current_cart.cart)
+        invoice.pay("A payment!", invoice.invoice.value)
+
+        # This payment is for the correct amount invoice should be paid.
+        self.assertTrue(invoice.invoice.paid)
+
+        # Cart should not be active
+        self.assertFalse(invoice.invoice.cart.active)
+
+        # Asking for a cart should generate a new one
+        new_cart = CartController.for_user(self.USER_1)
+        self.assertNotEqual(current_cart.cart, new_cart.cart)
