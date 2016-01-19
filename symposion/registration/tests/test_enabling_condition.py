@@ -30,6 +30,20 @@ class EnablingConditionTestCases(RegistrationCartTestCase):
         enabling_condition.save()
 
 
+    @classmethod
+    def add_product_enabling_condition_on_category(cls):
+        ''' Adds a product enabling condition that operates on a category:
+        adding an item from CAT_1 is predicated on adding PROD_3 beforehand '''
+        enabling_condition = rego.ProductEnablingCondition.objects.create(
+            description="Product condition",
+            mandatory=False,
+        )
+        enabling_condition.save()
+        enabling_condition.categories.add(cls.CAT_1)
+        enabling_condition.enabling_products.add(cls.PROD_3)
+        enabling_condition.save()
+
+
     def add_category_enabling_condition(cls):
         ''' Adds a category enabling condition: adding PROD_1 to a cart is
         predicated on adding an item from CAT_2 beforehand.'''
@@ -65,6 +79,18 @@ class EnablingConditionTestCases(RegistrationCartTestCase):
 
         # Create new cart and try to add PROD_1
         current_cart = CartController.for_user(self.USER_1)
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+
+    def test_product_enabling_condition_enables_category(self):
+        self.add_product_enabling_condition_on_category()
+
+        # Cannot buy PROD_1 without buying item from CAT_2
+        current_cart = CartController.for_user(self.USER_1)
+        with self.assertRaises(ValidationError):
+            current_cart.add_to_cart(self.PROD_1, 1)
+
+        current_cart.add_to_cart(self.PROD_3, 1)
         current_cart.add_to_cart(self.PROD_1, 1)
 
 

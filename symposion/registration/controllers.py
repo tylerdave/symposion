@@ -1,3 +1,4 @@
+from django.db.models import F, Q
 from symposion.registration import models as rego
 
 from enabling_condition import EnablingConditionController
@@ -28,9 +29,10 @@ class ProductController(object):
         of this Product without exceeding the ceilings the product is attached
         to. '''
 
-        # TODO: capture ceilings based on category
         conditions = rego.EnablingConditionBase.objects.filter(
-            products=self.product).select_subclasses()
+            Q(products=self.product) | Q(categories=self.product.category)
+        ).select_subclasses()
+
         mandatory_violated = False
         non_mandatory_met = False
 
