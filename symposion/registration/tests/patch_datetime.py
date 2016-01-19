@@ -18,7 +18,7 @@ class SetTimeMixin(object):
         self.now = time
 
     def add_timedelta(self, delta):
-        self.now = delta
+        self.now += delta
 
     def new_timezone_now(self):
         return self.now
