@@ -44,4 +44,15 @@ class InvoiceTestCase(RegistrationCartTestCase):
             invoice_2.invoice.value)
 
     def test_create_invoice_fails_if_cart_invalid(self):
-        pass
+        self.make_ceiling("Limit ceiling", limit=1)
+        self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
+        current_cart = CartController.for_user(self.USER_1)
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+        self.add_timedelta(self.RESERVATION * 2)
+        cart_2 = CartController.for_user(self.USER_2)
+        cart_2.add_to_cart(self.PROD_1, 1)
+
+        # Now try to invoice the first user
+        with self.assertRaises(ValidationError):
+            InvoiceController.for_cart(current_cart)
