@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
+from model_utils.managers import InheritanceManager
 
 
 from symposion.markdown_parser import parse
@@ -197,6 +198,8 @@ class EnablingConditionBase(models.Model):
     mandatory conditions are met, otherwise, if there is at least one enabling
     condition defined on a Product or Category, it will only be enabled if at
     least one condition is met. '''
+
+    objects = InheritanceManager()
 
     def __str__(self):
         return self.name

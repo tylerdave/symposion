@@ -39,7 +39,7 @@ class CartController(object):
 
         # TODO: Check enabling conditions for product for user
 
-        if not prod.can_add_within_ceilings(quantity):
+        if not prod.can_add_with_enabling_conditions(self.cart.user, quantity):
                 raise ValidationError("Not enough of that product left")
 
         if not prod.user_can_add_within_limit(self.cart.user, quantity):

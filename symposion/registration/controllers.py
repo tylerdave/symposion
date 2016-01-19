@@ -21,29 +21,64 @@ class ProductController(object):
         else:
             return True
 
-    def can_add_within_ceilings(self, quantity):
-        ''' Returns true is the user is able to add _quantity_ to their count
+    def can_add_with_enabling_conditions(self, user, quantity):
+        ''' Returns true if the user is able to add _quantity_ to their count
         of this Product without exceeding the ceilings the product is attached
         to. '''
 
-        ceilings = rego.TimeOrStockLimitEnablingCondition.objects.filter(products=self.product)
-        for ceiling in ceilings:
-            ceil = CeilingController(ceiling)
-            if not ceil.quantity_within_ceiling(self.product, quantity):
-                return False
+        # TODO: capture ceilings based on category
+        conditions = rego.EnablingConditionBase.objects.filter(
+            products=self.product).select_subclasses()
+        mandatory_violated = False
+        non_mandatory_met = False
+
+        for condition in conditions:
+            cond = EnablingConditionController.for_condition(condition)
+            met = cond.user_can_add(user, self.product, quantity)
+
+            if condition.mandatory and not met:
+                mandatory_violated = True
+                break
+            if met:
+                non_mandatory_met = True
+
+        if mandatory_violated:
+            # All mandatory conditions must be met
+            return False
+
+        if len(conditions) > 0 and not non_mandatory_met:
+            # If there's any non-mandatory conditions, one must be met
+            return False
+
+        return True
+
+
+class EnablingConditionController(object):
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def for_condition(condition):
+        if isinstance(condition, rego.TimeOrStockLimitEnablingCondition):
+            return TimeOrStockLimitEnablingConditionController(condition)
         else:
-            return True
+            return EnablingConditionController()
+
+    def user_can_add(self, user, product, quantity):
+        return True
 
 
-class CeilingController(object):
+class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
 
     def __init__(self, ceiling):
         self.ceiling = ceiling
 
-    def quantity_within_ceiling(self, product, quantity):
+    def user_can_add(self, user, product, quantity):
         ''' returns True if adding _quantity_ of _product_ will not vioilate
         this ceiling. '''
 
+        # TODO capture products based on categories
         if product not in self.ceiling.products.all():
             return True
 
