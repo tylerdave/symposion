@@ -218,3 +218,38 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         self.add_timedelta(self.RESERVATION * 20)
         with self.assertRaises(ValidationError):
             first_cart.add_to_cart(self.PROD_1, 1)
+
+
+    def test_validate_cart_fails_product_ceilings(self):
+        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
+            description="Limit ceiling",
+            mandatory=True,
+            limit=1,
+        )
+        limit_ceiling.save()
+        limit_ceiling.products.add(self.PROD_1)
+        limit_ceiling.save()
+
+        self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
+
+        first_cart = CartController(self.USER_1)
+        second_cart = CartController(self.USER_2)
+
+        # Adding a valid product should validate.
+        first_cart.add_to_cart(self.PROD_1, 1)
+        first_cart.validate_cart()
+
+        # Cart should become invalid if lapsed carts are claimed.
+        self.add_timedelta(self.RESERVATION + datetime.timedelta(seconds=1))
+
+        # Unpaid cart within reservation window
+        second_cart.add_to_cart(self.PROD_1, 1)
+        with self.assertRaises(ValidationError):
+            first_cart.validate_cart()
+
+        # Paid cart outside the reservation window
+        second_cart.cart.active = False
+        second_cart.cart.save()
+        self.add_timedelta(self.RESERVATION + datetime.timedelta(seconds=1))
+        with self.assertRaises(ValidationError):
+            first_cart.validate_cart()
