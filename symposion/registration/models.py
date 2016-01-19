@@ -185,7 +185,7 @@ class IncludedProductDiscount(DiscountBase):
     class Meta:
         verbose_name = _("Product inclusion")
 
-    product = models.ManyToManyField(Product,
+    enabling_products = models.ManyToManyField(Product,
         verbose_name=_("Including product"))
 
 
@@ -231,7 +231,7 @@ class ProductEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by product: "
 
-    product = models.ManyToManyField(Product)
+    enabling_products = models.ManyToManyField(Product)
 
 
 @python_2_unicode_compatible
@@ -242,7 +242,7 @@ class CategoryEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by product in category: "
 
-    category = models.ForeignKey(Category)
+    enabling_categories = models.ForeignKey(Category)
 
 
 @python_2_unicode_compatible
