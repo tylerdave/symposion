@@ -90,12 +90,16 @@ class Product(models.Model):
 class Voucher(models.Model):
     ''' Registration vouchers '''
 
+    # Vouchers reserve a cart for a fixed amount of time, so that
+    # items may be added without the voucher being swiped by someone else
+    RESERVATION_DURATION = datetime.timedelta(hours=1)
+
     def __str__(self):
         return "Voucher for %s" % self.recipient
 
     recipient = models.CharField(max_length=64, verbose_name=_("Recipient"))
-    code = models.CharField(max_length=16, verbose_name=_("Voucher code"))
-    count = models.PositiveIntegerField(verbose_name=_("Voucher use limit"))
+    code = models.CharField(max_length=16, unique=True, verbose_name=_("Voucher code"))
+    limit = models.PositiveIntegerField(verbose_name=_("Voucher use limit"))
 
 
 # Product Modifiers
@@ -351,6 +355,6 @@ class Payment(models.Model):
         return "Payment: ref=%s amount=%s" % (self.reference, self.amount)
 
     invoice = models.ForeignKey(Invoice)
-    time = models.DateTimeField()
+    time = models.DateTimeField(default=timezone.now())
     reference = models.CharField(max_length=64)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
