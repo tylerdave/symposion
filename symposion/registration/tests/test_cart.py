@@ -94,12 +94,8 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
 
         # User should not be able to add 10 of PROD_1 to the current cart now,
         # because they have a limit of 10.
-        try:
+        with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_1, 10)
-        except ValidationError:
-            pass
-        else:
-            raise AssertionError("Was able to exceed per-user limit on one cart")
 
         current_cart.cart.active = False
         current_cart.cart.save()
@@ -107,18 +103,14 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         current_cart = CartController(self.USER_1)
         # User should not be able to add 10 of PROD_1 to the current cart now,
         # even though it's a new cart.
-        try:
+        with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_1, 10)
-        except ValidationError:
-            pass
-        else:
-            raise AssertionError("Was able to exceed per-user limit over multiple carts")
 
 
     def test_add_to_cart_ceiling_limit(self):
 
         limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
-            description="Ceiling 1",
+            description="Limit ceiling",
             mandatory=True,
             limit=9,
         )
@@ -129,25 +121,17 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         current_cart = CartController(self.USER_1)
 
         # User should not be able to add 10 of PROD_1 to the current cart
-        # because it is affected by CEIL_1
-        try:
+        # because it is affected by limit_ceiling
+        with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_2, 10)
-        except ValidationError:
-            pass
-        else:
-            raise AssertionError("Was able to exceed ceiling limit over single product")
 
         # User should be able to add 5 of PROD_1 to the current cart
         current_cart.add_to_cart(self.PROD_1, 5)
 
         # User should not be able to add 10 of PROD_2 to the current cart
         # because it is affected by CEIL_1
-        try:
+        with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_2, 10)
-        except ValidationError:
-            pass
-        else:
-            raise AssertionError("Was able to exceed ceiling limit over multiple products")
 
         # User should be able to add 5 of PROD_2 to the current cart
         current_cart.add_to_cart(self.PROD_2, 4)
