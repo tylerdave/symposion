@@ -159,9 +159,9 @@ class TimeOrStockLimitDiscount(DiscountBase):
     class Meta:
         verbose_name = _("Promotional discount")
 
-    start_time = models.DateTimeField(blank=True, verbose_name=_("Start time"))
-    end_time = models.DateTimeField(blank=True, verbose_name=_("End time"))
-    limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
+    start_time = models.DateTimeField(null=True, verbose_name=_("Start time"))
+    end_time = models.DateTimeField(null=True, verbose_name=_("End time"))
+    limit = models.PositiveIntegerField(null=True, verbose_name=_("Limit"))
 
 
 class VoucherDiscount(DiscountBase):
@@ -215,7 +215,7 @@ class TimeOrStockLimitEnablingCondition(EnablingConditionBase):
 
     start_time = models.DateTimeField(null=True, verbose_name=_("Start time"))
     end_time = models.DateTimeField(null=True, verbose_name=_("End time"))
-    limit = models.PositiveIntegerField(blank=True, verbose_name=_("Limit"))
+    limit = models.PositiveIntegerField(null=True, verbose_name=_("Limit"))
 
 
 @python_2_unicode_compatible
