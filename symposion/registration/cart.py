@@ -82,7 +82,7 @@ class CartController(object):
             )
         product_item.save()
 
-        # TODO: Calculate discounts
+        self.add_discount(product, quantity)
 
         self.extend_reservation()
         self.cart.revision += 1
@@ -128,3 +128,44 @@ class CartController(object):
                 raise ValidationError("Products are no longer available")
 
         # TODO: recalculate discounts
+
+
+    def add_discount(self, product, quantity):
+        ''' Calculates the best available discounts for this product.
+        NB this will be super-inefficient in aggregate because discounts will be
+        re-tested for each product. We should work on that.'''
+
+        prod = ProductController(product)
+        discounts = prod.available_discounts(self.cart.user)
+        discounts.sort(key=lambda discount: discount.value)
+
+        for discount in reversed(discounts):
+            if quantity == 0:
+                break
+
+            # TODO check past uses of this discount
+
+            try:
+                discount_item = rego.DiscountItem.objects.get(
+                    product=product,
+                    cart=self.cart,
+                    discount=discount.discount,
+                )
+                discount_item.quantity += quantity
+            except ObjectDoesNotExist:
+                discount_item = rego.DiscountItem.objects.create(
+                    product=product,
+                    cart=self.cart,
+                    discount=discount.discount,
+                    quantity=quantity,
+                )
+
+            ours = discount_item.quantity
+            allowed = discount.condition.quantity
+            if ours > allowed:
+                discount_item.quantity = allowed
+                # Update the remaining quantity.
+                quantity = ours - allowed
+            else:
+                quantity = 0
+            discount_item.save()
