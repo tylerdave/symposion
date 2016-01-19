@@ -34,6 +34,17 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
         # TODO: test end_time
 
         # Test limits
+        if not self.test_limits(quantity):
+            return False
+
+        # All limits have been met
+        return True
+
+    def test_limits(self, quantity):
+
+        if self.ceiling.limit is None:
+            return True
+
         count = 0
         product_items = rego.ProductItem.objects.filter(
             product=self.ceiling.products.all())
@@ -44,5 +55,4 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
         if count + quantity > self.ceiling.limit:
             return False
 
-        # All limits have been met
         return True
