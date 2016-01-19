@@ -35,6 +35,14 @@ class RegistrationCartTestCase(SetTimeMixin, TestCase):
         )
         cls.CAT_1.save()
 
+        cls.CAT_2 = rego.Category.objects.create(
+            name="Category 2",
+            description="This is a test category",
+            order=10,
+            render_type=rego.Category.RENDER_TYPE_RADIO,
+        )
+        cls.CAT_2.save()
+
         cls.RESERVATION = datetime.timedelta(hours=1)
 
         cls.PROD_1 = rego.Product.objects.create(
@@ -59,6 +67,18 @@ class RegistrationCartTestCase(SetTimeMixin, TestCase):
             order=10,
         )
         cls.PROD_2.save()
+
+        cls.PROD_3 = rego.Product.objects.create(
+            name="Product 3",
+            description= "This is a test product. It costs $10. " \
+                "A user may have 10 of them.",
+            category=cls.CAT_2,
+            price=Decimal("10.00"),
+            limit_per_user=10,
+            order=10,
+        )
+        cls.PROD_2.save()
+
 
     @classmethod
     def make_ceiling(cls, name, limit=None, start_time=None, end_time=None):

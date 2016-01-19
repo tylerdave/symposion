@@ -11,6 +11,8 @@ class EnablingConditionController(object):
 
     @staticmethod
     def for_condition(condition):
+        if isinstance(condition, rego.ProductEnablingCondition):
+            return ProductEnablingConditionController(condition)
         if isinstance(condition, rego.TimeOrStockLimitEnablingCondition):
             return TimeOrStockLimitEnablingConditionController(condition)
         elif isinstance(condition, rego.VoucherEnablingCondition):
@@ -21,6 +23,21 @@ class EnablingConditionController(object):
 
     def user_can_add(self, user, product, quantity):
         return True
+
+
+class ProductEnablingConditionController(EnablingConditionController):
+
+    def __init__(self, condition):
+        self.condition = condition
+
+    def user_can_add(self, user, product, quantity):
+        ''' returns True if the user has a product that invokes this
+        condition in one of their carts '''
+
+        carts = rego.Cart.objects.filter(user=user)
+        products = rego.ProductItem.objects.filter(cart=carts,
+            product=self.condition.enabling_products.all())
+        return len(products) > 0
 
 
 class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
