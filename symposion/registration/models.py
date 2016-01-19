@@ -110,6 +110,8 @@ class DiscountBase(models.Model):
     determines whether or not the given discount is available to be added to the
     current cart. '''
 
+    objects = InheritanceManager()
+
     def __str__(self):
         return "Discount: " + self.description
 
