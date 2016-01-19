@@ -3,7 +3,7 @@
 ## Definitions
 - User has one 'active Cart' at a time. The Cart remains active until a paid Invoice is attached to it.
 - A 'paid Cart' is a Cart with a paid Invoice attached to it, where the Invoice has not been voided.
-- An unpaid Cart is 'reserved' if 
+- An unpaid Cart is 'reserved' if
  - CURRENT_TIME - "Time last updated" <= max(reservation duration of Products in Cart),
  - A Voucher was added and CURRENT_TIME - "Time last updated" < VOUCHER_RESERVATION_TIME (15 minutes?)
 - An Item is 'reserved' if:
@@ -19,7 +19,7 @@
 - A cart is invalid if it contains a voucher that has been overused
 
 
-## Are products available? 
+## Are products available?
 
 - Availability is determined by the number of items we want to add to the cart: items_to_add
 
@@ -58,6 +58,20 @@
  - items_to_add + sum(paid and reserved Items for each Product in the ceiling) > Total available
 
 
+## Applying Discounts
+
+- Discounts only apply to the current cart
+- Discounts can be applied to multiple carts until the user has exhausted the quantity for each product attached to the discount.
+- Only one discount discount can be applied to each single item. Discounts are applied as follows:
+ - All non-exhausted discounts for the product or its category are ordered by value
+ - The highest discount is applied for the lower of the quantity of the product in the cart, or the remaining quantity from this discount
+ - If the quantity remaining is non-zero, apply the next available discount
+
+- Individual discount objects should not contain more than one DiscountForProduct for the same product
+- Individual discount objects should not contain more than one DiscountForCategory for the same category
+- Individual discount objects should not contain a discount for both a product and its category
+
+
 ## Adding Items to the Cart
 
 - Products that are not displayed may not be added to a Cart
@@ -71,10 +85,10 @@
 ## Generating an invoice
 
 - User can ask to 'check out' the active Cart. Doing so generates an Invoice. The invoice corresponds to a revision number of the cart.
-- Checking out the active Cart resets the "Time last updated" for the cart. 
+- Checking out the active Cart resets the "Time last updated" for the cart.
 - The invoice represents the current state of the cart.
 - If the revision number for the cart is different to the cart's revision number for the invoice, the invoice is void.
-- The invoice is void if 
+- The invoice is void if
 
 
 ## Paying an invoice
@@ -107,10 +121,10 @@ User is shown two options:
 
 ## User has not purchased a ticket, and wishes to:
 
-This gives the user a guided registration process. 
+This gives the user a guided registration process.
 
 1. Take list of categories, sorted by display order, and display the next lowest enabled & available category
-1. Take user to category page 
+1. Take user to category page
 1. User can click "back" to go to previous screen, or "next" to go the next lowest enabled & available category
 
 Once all categories have been seen:
@@ -147,7 +161,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
  - User
  - Has done guided registration?
  - Badge
- - 
+ -
 
 ## Transaction Models
 
@@ -155,13 +169,18 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
  - User
  - {Items}
  - {Voucher}
- - {Discount}
+ - {DiscountItems}
  - Time last updated
  - Revision Number
  - Active?
 
 - Item
  - Product
+ - Quantity
+
+- DiscountItem
+ - Product
+ - Discount
  - Quantity
 
 - Invoice:
@@ -176,7 +195,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
 
 - LineItem
  - Description
- - Quantity 
+ - Quantity
  - Price
 
 - Payment
@@ -267,7 +286,7 @@ TODO: Consider separate workflow for purchasing ticket vouchers.
    - VoucherEnablingCondition:
     * Enabling because the user has entered a voucher code *
      - Voucher
-   
+
    - RoleEnablingCondition:
      * Enabling because the user has a specific role *
      - Role
