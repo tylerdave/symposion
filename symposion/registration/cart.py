@@ -11,10 +11,12 @@ from controllers import ProductController
 
 class CartController(object):
 
-    def __init__(self, user):
-        self.cart = self._cart_for_user(user)
+    def __init__(self, cart):
+        self.cart = cart
 
-    def _cart_for_user(self, user):
+
+    @staticmethod
+    def for_user(user):
         ''' Returns the user's current cart, or creates a new cart
         if there isn't one ready yet. '''
 
@@ -27,7 +29,8 @@ class CartController(object):
                 reservation_duration=datetime.timedelta(),
                  )
             existing.save()
-        return existing
+        return CartController(existing)
+
 
     def extend_reservation(self):
         ''' Updates the cart's time last updated value, which is used to

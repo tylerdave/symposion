@@ -63,22 +63,22 @@ class RegistrationCartTestCase(SetTimeMixin, TestCase):
 class BasicCartTests(RegistrationCartTestCase):
 
     def test_get_cart(self):
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
 
         current_cart.cart.active = False
         current_cart.cart.save()
 
         old_cart = current_cart
 
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
         self.assertNotEqual(old_cart.cart, current_cart.cart)
 
-        current_cart2 = CartController(self.USER_1)
+        current_cart2 = CartController.for_user(self.USER_1)
         self.assertEqual(current_cart.cart, current_cart2.cart)
 
 
     def test_add_to_cart_collapses_product_items(self):
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
 
         # Add a product twice
         current_cart.add_to_cart(self.PROD_1, 1)
@@ -93,7 +93,7 @@ class BasicCartTests(RegistrationCartTestCase):
 
 
     def test_add_to_cart_per_user_limit(self):
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
 
         # User should be able to add 1 of PROD_1 to the current cart.
         current_cart.add_to_cart(self.PROD_1, 1)
@@ -109,12 +109,12 @@ class BasicCartTests(RegistrationCartTestCase):
         current_cart.cart.active = False
         current_cart.cart.save()
 
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
         # User should not be able to add 10 of PROD_1 to the current cart now,
         # even though it's a new cart.
         with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_1, 10)
 
         # Second user should not be affected by first user's limits
-        second_user_cart = CartController(self.USER_2)
+        second_user_cart = CartController.for_user(self.USER_2)
         second_user_cart.add_to_cart(self.PROD_1, 10)

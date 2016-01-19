@@ -26,7 +26,7 @@ class CeilingsTestCases(RegistrationCartTestCase):
         limit_ceiling.products.add(self.PROD_1, self.PROD_2)
         limit_ceiling.save()
 
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
 
         # User should not be able to add 10 of PROD_1 to the current cart
         # because it is affected by limit_ceiling
@@ -55,7 +55,7 @@ class CeilingsTestCases(RegistrationCartTestCase):
         date_range_ceiling.products.add(self.PROD_1)
         date_range_ceiling.save()
 
-        current_cart = CartController(self.USER_1)
+        current_cart = CartController.for_user(self.USER_1)
 
         # User should not be able to add whilst we're before start_time
         self.set_time(datetime.datetime(2014, 01, 01, tzinfo=UTC))
@@ -91,8 +91,8 @@ class CeilingsTestCases(RegistrationCartTestCase):
 
         self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
 
-        first_cart = CartController(self.USER_1)
-        second_cart = CartController(self.USER_2)
+        first_cart = CartController.for_user(self.USER_1)
+        second_cart = CartController.for_user(self.USER_2)
 
         first_cart.add_to_cart(self.PROD_1, 1)
 
@@ -130,8 +130,8 @@ class CeilingsTestCases(RegistrationCartTestCase):
 
         self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
 
-        first_cart = CartController(self.USER_1)
-        second_cart = CartController(self.USER_2)
+        first_cart = CartController.for_user(self.USER_1)
+        second_cart = CartController.for_user(self.USER_2)
 
         # Adding a valid product should validate.
         first_cart.add_to_cart(self.PROD_1, 1)
