@@ -13,6 +13,8 @@ class EnablingConditionController(object):
     def for_condition(condition):
         if isinstance(condition, rego.TimeOrStockLimitEnablingCondition):
             return TimeOrStockLimitEnablingConditionController(condition)
+        elif isinstance(condition, rego.VoucherEnablingCondition):
+            return VoucherEnablingConditionController(condition)
         else:
             return EnablingConditionController()
 
@@ -77,3 +79,15 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
             return False
 
         return True
+
+
+class VoucherEnablingConditionController(EnablingConditionController):
+
+    def __init__(self, condition):
+        self.condition = condition
+
+    def user_can_add(self, user, product, quantity):
+        ''' returns True if the user has the given voucher attached. '''
+        carts = rego.Cart.objects.filter(user=user,
+            vouchers=self.condition.voucher)
+        return len(carts) > 0

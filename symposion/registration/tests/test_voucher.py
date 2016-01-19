@@ -17,13 +17,18 @@ UTC = pytz.timezone('UTC')
 
 class VoucherTestCases(RegistrationCartTestCase):
 
-    def test_apply_voucher(self):
+    @classmethod
+    def new_voucher(self):
         voucher = rego.Voucher.objects.create(
             recipient="Voucher recipient",
             code="VOUCHER",
             limit=1
         )
         voucher.save()
+        return voucher
+
+    def test_apply_voucher(self):
+        voucher = self.new_voucher()
 
         self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
 
@@ -47,3 +52,24 @@ class VoucherTestCases(RegistrationCartTestCase):
         self.add_timedelta(rego.Voucher.RESERVATION_DURATION * 2)
         with self.assertRaises(ValidationError):
             cart_1.apply_voucher(voucher)
+
+    def test_voucher_enables_item(self):
+        voucher = self.new_voucher()
+
+        enabling_condition = rego.VoucherEnablingCondition.objects.create(
+            description="Voucher condition",
+            voucher=voucher,
+            mandatory=False,
+        )
+        enabling_condition.save()
+        enabling_condition.products.add(self.PROD_1)
+        enabling_condition.save()
+
+        # Adding the product without a voucher will not work
+        current_cart = CartController.for_user(self.USER_1)
+        with self.assertRaises(ValidationError):
+            current_cart.add_to_cart(self.PROD_1, 1)
+
+        # Apply the voucher
+        current_cart.apply_voucher(voucher)
+        current_cart.add_to_cart(self.PROD_1, 1)
