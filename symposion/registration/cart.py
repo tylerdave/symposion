@@ -14,7 +14,6 @@ class CartController(object):
     def __init__(self, cart):
         self.cart = cart
 
-
     @staticmethod
     def for_user(user):
         ''' Returns the user's current cart, or creates a new cart
@@ -81,6 +80,7 @@ class CartController(object):
         # TODO: Calculate discounts
 
         self.extend_reservation()
+        self.cart.revision += 1
         self.cart.save()
 
 

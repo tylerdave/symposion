@@ -62,7 +62,6 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
 
 
     def test_limits(self, quantity):
-
         if self.ceiling.limit is None:
             return True
 

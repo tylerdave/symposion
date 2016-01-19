@@ -311,10 +311,15 @@ class Invoice(models.Model):
     def __str__(self):
         return "Invoice #%d" % self.id
 
+    def clean(self):
+        if self.cart is not None and self.cart_revision is None:
+            raise ValidationError(
+                "If this is a cart invoice, it must have a revision")
+
     # Invoice Number
     user = models.ForeignKey(User)
-    cart = models.ForeignKey(Cart, blank=True)
-    cart_revision = models.IntegerField()
+    cart = models.ForeignKey(Cart, null=True)
+    cart_revision = models.IntegerField(null=True)
     # Line Items (foreign key)
     void = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
