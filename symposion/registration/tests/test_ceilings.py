@@ -17,14 +17,7 @@ UTC = pytz.timezone('UTC')
 class CeilingsTestCases(RegistrationCartTestCase):
 
     def test_add_to_cart_ceiling_limit(self):
-        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
-            description="Limit ceiling",
-            mandatory=True,
-            limit=9,
-        )
-        limit_ceiling.save()
-        limit_ceiling.products.add(self.PROD_1, self.PROD_2)
-        limit_ceiling.save()
+        self.make_ceiling("Limit ceiling", limit=9)
 
         current_cart = CartController.for_user(self.USER_1)
 
@@ -45,15 +38,10 @@ class CeilingsTestCases(RegistrationCartTestCase):
         current_cart.add_to_cart(self.PROD_2, 4)
 
     def test_add_to_cart_ceiling_date_range(self):
-        date_range_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
-            description="Date range ceiling",
-            mandatory=True,
+        self.make_ceiling("date range ceiling",
             start_time=datetime.datetime(2015, 01, 01, tzinfo=UTC),
-            end_time=datetime.datetime(2015, 02, 01, tzinfo=UTC),
+            end_time=datetime.datetime(2015, 02, 01, tzinfo=UTC)
         )
-        date_range_ceiling.save()
-        date_range_ceiling.products.add(self.PROD_1)
-        date_range_ceiling.save()
 
         current_cart = CartController.for_user(self.USER_1)
 
@@ -80,14 +68,7 @@ class CeilingsTestCases(RegistrationCartTestCase):
 
 
     def test_add_to_cart_ceiling_limit_reserved_carts(self):
-        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
-            description="Limit ceiling",
-            mandatory=True,
-            limit=1,
-        )
-        limit_ceiling.save()
-        limit_ceiling.products.add(self.PROD_1)
-        limit_ceiling.save()
+        self.make_ceiling("Limit ceiling", limit=1)
 
         self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
 
@@ -119,14 +100,7 @@ class CeilingsTestCases(RegistrationCartTestCase):
 
 
     def test_validate_cart_fails_product_ceilings(self):
-        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
-            description="Limit ceiling",
-            mandatory=True,
-            limit=1,
-        )
-        limit_ceiling.save()
-        limit_ceiling.products.add(self.PROD_1)
-        limit_ceiling.save()
+        self.make_ceiling("Limit ceiling", limit=1)
 
         self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
 
