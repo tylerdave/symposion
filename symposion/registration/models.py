@@ -323,6 +323,7 @@ class Invoice(models.Model):
     # Line Items (foreign key)
     void = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
+    value = models.DecimalField(max_digits=8, decimal_places=2)
 
 
 @python_2_unicode_compatible
