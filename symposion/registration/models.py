@@ -355,6 +355,6 @@ class Payment(models.Model):
         return "Payment: ref=%s amount=%s" % (self.reference, self.amount)
 
     invoice = models.ForeignKey(Invoice)
-    time = models.DateTimeField(default=timezone.now())
+    time = models.DateTimeField(default=timezone.now)
     reference = models.CharField(max_length=64)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
