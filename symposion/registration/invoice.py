@@ -1,6 +1,8 @@
+from decimal import Decimal
 from django.core.exceptions import ObjectDoesNotExist
 
 from symposion.registration import models as rego
+
 from cart import CartController
 
 class InvoiceController(object):
@@ -31,12 +33,28 @@ class InvoiceController(object):
             user=cart.user,
             cart=cart,
             cart_revision=cart.revision,
+            value=Decimal()
         )
+        invoice.save()
 
         # TODO: calculate line items.
+        product_items = rego.ProductItem.objects.filter(cart=cart)
+        invoice_value = Decimal()
+        for item in product_items:
+            line_item = rego.LineItem.objects.create(
+                invoice=invoice,
+                description=item.product.name,
+                quantity=item.quantity,
+                price=item.product.price,
+            )
+            line_item.save()
+            invoice_value += line_item.quantity * line_item.price
+
+        # TODO: calculate line items from discounts
+        invoice.value = invoice_value
+        invoice.save()
 
         return invoice
-
 
     def is_valid(self):
         ''' Returns true if the attached invoice is not void and it represents
@@ -45,13 +63,13 @@ class InvoiceController(object):
 
     def void(self):
         ''' Voids the invoice. '''
+        pass
 
     def pay(self, reference, amount):
         ''' Pays the invoice by the given amount. If the payment
         equals the total on the invoice, finalise the invoice.
         (NB should be transactional.)
         '''
-
         pass
 
     def _finalise(self):

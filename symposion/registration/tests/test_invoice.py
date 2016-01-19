@@ -24,14 +24,24 @@ class InvoiceTestCase(RegistrationCartTestCase):
         # Should be able to create an invoice after the product is added
         current_cart.add_to_cart(self.PROD_1, 1)
         invoice_1 = InvoiceController.for_cart(current_cart.cart)
-        invoice_1.invoice
+        # That invoice should have a single line item
+        line_items = rego.LineItem.objects.filter(invoice=invoice_1.invoice)
+        self.assertEqual(1, len(line_items))
+        # That invoice should have a value equal to cost of PROD_1
+        self.assertEqual(self.PROD_1.price, invoice_1.invoice.value)
 
         # Adding item to cart should void all active invoices and produce
         # a new invoice
-        current_cart.add_to_cart(self.PROD_1, 1)
+        current_cart.add_to_cart(self.PROD_2, 1)
         invoice_2 = InvoiceController.for_cart(current_cart.cart)
         self.assertNotEqual(invoice_1.invoice, invoice_2.invoice)
-
+        # Invoice should have two line items
+        line_items = rego.LineItem.objects.filter(invoice=invoice_2.invoice)
+        self.assertEqual(2, len(line_items))
+        # Invoice should have a value equal to cost of PROD_1 and PROD_2
+        self.assertEqual(
+            self.PROD_1.price + self.PROD_2.price,
+            invoice_2.invoice.value)
 
     def test_create_invoice_fails_if_cart_invalid(self):
         pass
