@@ -55,4 +55,4 @@ class InvoiceTestCase(RegistrationCartTestCase):
 
         # Now try to invoice the first user
         with self.assertRaises(ValidationError):
-            InvoiceController.for_cart(current_cart)
+            InvoiceController.for_cart(current_cart.cart)
