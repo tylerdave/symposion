@@ -8,12 +8,14 @@ class EnablingConditionController(object):
     def __init__(self):
         pass
 
+
     @staticmethod
     def for_condition(condition):
         if isinstance(condition, rego.TimeOrStockLimitEnablingCondition):
             return TimeOrStockLimitEnablingConditionController(condition)
         else:
             return EnablingConditionController()
+
 
     def user_can_add(self, user, product, quantity):
         return True
@@ -23,6 +25,7 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
 
     def __init__(self, ceiling):
         self.ceiling = ceiling
+
 
     def user_can_add(self, user, product, quantity):
         ''' returns True if adding _quantity_ of _product_ will not vioilate
@@ -43,6 +46,7 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
         # All limits have been met
         return True
 
+
     def test_date_range(self):
         now = timezone.now()
 
@@ -56,6 +60,7 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
 
         return True
 
+
     def test_limits(self, quantity):
 
         if self.ceiling.limit is None:
@@ -64,10 +69,11 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
         count = 0
         product_items = rego.ProductItem.objects.filter(
             product=self.ceiling.products.all())
+        reserved_carts = rego.Cart.reserved_carts()
         for product_item in product_items:
-            if True:
-                # TODO: test that cart is paid or reserved
+            if product_item.cart in reserved_carts:
                 count += product_item.quantity
+
         if count + quantity > self.ceiling.limit:
             return False
 

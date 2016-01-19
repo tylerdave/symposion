@@ -1,18 +1,18 @@
 import datetime
+import pytz
 
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-
-from pytz import timezone
+from django.utils import timezone
 
 from symposion.registration import models as rego
 from symposion.registration.cart import CartController
 
 from patch_datetime import SetTimeMixin
 
-UTC = timezone('UTC')
+UTC = pytz.timezone('UTC')
 
 class AddToCartTestCase(SetTimeMixin, TestCase):
 
@@ -35,12 +35,15 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         )
         cls.CAT_1.save()
 
+        cls.RESERVATION = datetime.timedelta(hours=1)
+
         cls.PROD_1 = rego.Product.objects.create(
             name="Product 1",
             description= "This is a test product. It costs $10. " \
                 "A user may have 10 of them.",
             category=cls.CAT_1,
             price=Decimal("10.00"),
+            reservation_duration=cls.RESERVATION,
             limit_per_user=10,
             order=10,
         )
@@ -116,7 +119,6 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
 
 
     def test_add_to_cart_ceiling_limit(self):
-
         limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
             description="Limit ceiling",
             mandatory=True,
@@ -177,3 +179,42 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         self.set_time(datetime.datetime(2014, 01, 01, minute=01, tzinfo=UTC))
         with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_1, 1)
+
+
+    def test_add_to_cart_ceiling_limit_reserved_carts(self):
+        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
+            description="Limit ceiling",
+            mandatory=True,
+            limit=1,
+        )
+        limit_ceiling.save()
+        limit_ceiling.products.add(self.PROD_1)
+        limit_ceiling.save()
+
+        self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
+
+        first_cart = CartController(self.USER_1)
+        second_cart = CartController(self.USER_2)
+
+        first_cart.add_to_cart(self.PROD_1, 1)
+
+        # User 2 should not be able to add item to their cart
+        # because user 1 has item reserved, exhausting the ceiling
+        with self.assertRaises(ValidationError):
+            second_cart.add_to_cart(self.PROD_1, 1)
+
+        # User 2 should be able to add item to their cart once the
+        # reservation duration is elapsed
+        self.add_timedelta(self.RESERVATION + datetime.timedelta(seconds=1))
+        second_cart.add_to_cart(self.PROD_1, 1)
+
+        # User 2 pays for their cart
+        second_cart.cart.active = False
+        second_cart.cart.save()
+
+        # User 1 should not be able to add item to their cart
+        # because user 2 has paid for their reserved item, exhausting
+        # the ceiling, regardless of the reservation time.
+        self.add_timedelta(self.RESERVATION * 20)
+        with self.assertRaises(ValidationError):
+            first_cart.add_to_cart(self.PROD_1, 1)

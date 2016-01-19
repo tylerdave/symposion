@@ -6,6 +6,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import F, Q
+from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 from model_utils.managers import InheritanceManager
@@ -266,15 +268,26 @@ class Cart(models.Model):
     pending purchase. '''
 
     def __str__(self):
-        return "Cart: %d rev #%d" % (self.id, self.revision)
+        return "%d rev #%d" % (self.id, self.revision)
 
     user = models.ForeignKey(User)
     # ProductItems (foreign key)
     vouchers = models.ManyToManyField(Voucher, blank=True)
     discounts = models.ManyToManyField(DiscountBase, blank=True)
     time_last_updated = models.DateTimeField()
+    reservation_duration = models.DurationField()
     revision = models.PositiveIntegerField(default=1)
     active = models.BooleanField(default=True)
+
+    @classmethod
+    def reserved_carts(cls):
+        ''' Gets all carts that are 'reserved' '''
+        return Cart.objects.filter(
+            (Q(active=True) &
+                Q(time_last_updated__gt=timezone.now()-F('reservation_duration')
+            )) |
+            Q(active=False)
+        )
 
 
 @python_2_unicode_compatible
