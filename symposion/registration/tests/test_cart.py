@@ -5,10 +5,14 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
+from pytz import timezone
+
 from symposion.registration import models as rego
 from symposion.registration.cart import CartController
 
 from patch_datetime import SetTimeMixin
+
+UTC = timezone('UTC')
 
 class AddToCartTestCase(SetTimeMixin, TestCase):
 
@@ -106,6 +110,10 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         with self.assertRaises(ValidationError):
             current_cart.add_to_cart(self.PROD_1, 10)
 
+        # Second user should not be affected by first user's limits
+        second_user_cart = CartController(self.USER_2)
+        second_user_cart.add_to_cart(self.PROD_1, 10)
+
 
     def test_add_to_cart_ceiling_limit(self):
 
@@ -135,3 +143,37 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
 
         # User should be able to add 5 of PROD_2 to the current cart
         current_cart.add_to_cart(self.PROD_2, 4)
+
+    def test_add_to_cart_ceiling_date_range(self):
+        date_range_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
+            description="Date range ceiling",
+            mandatory=True,
+            start_time=datetime.datetime(2015, 01, 01, tzinfo=UTC),
+            end_time=datetime.datetime(2015, 02, 01, tzinfo=UTC),
+        )
+        date_range_ceiling.save()
+        date_range_ceiling.products.add(self.PROD_1)
+        date_range_ceiling.save()
+
+        current_cart = CartController(self.USER_1)
+
+        # User should not be able to add whilst we're before start_time
+        self.set_time(datetime.datetime(2014, 01, 01, tzinfo=UTC))
+        with self.assertRaises(ValidationError):
+            current_cart.add_to_cart(self.PROD_1, 1)
+
+        # User should be able to add whilst we're during date range
+        # On edge of start
+        self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
+        current_cart.add_to_cart(self.PROD_1, 1)
+        # In middle
+        self.set_time(datetime.datetime(2015, 01, 15, tzinfo=UTC))
+        current_cart.add_to_cart(self.PROD_1, 1)
+        # On edge of end
+        self.set_time(datetime.datetime(2015, 02, 01, tzinfo=UTC))
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+        # User should not be able to add whilst we're after date range
+        self.set_time(datetime.datetime(2014, 01, 01, minute=01, tzinfo=UTC))
+        with self.assertRaises(ValidationError):
+            current_cart.add_to_cart(self.PROD_1, 1)

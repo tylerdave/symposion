@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from symposion.registration import models as rego
 
 
@@ -30,14 +32,28 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
         if product not in self.ceiling.products.all():
             return True
 
-        # TODO: test start_time
-        # TODO: test end_time
+        # Test date range
+        if not self.test_date_range():
+            return False
 
         # Test limits
         if not self.test_limits(quantity):
             return False
 
         # All limits have been met
+        return True
+
+    def test_date_range(self):
+        now = timezone.now()
+
+        if self.ceiling.start_time is not None:
+            if now < self.ceiling.start_time:
+                return False
+
+        if self.ceiling.end_time is not None:
+            if now > self.ceiling.end_time:
+                return False
+
         return True
 
     def test_limits(self, quantity):
