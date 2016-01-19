@@ -242,7 +242,7 @@ class CategoryEnablingCondition(EnablingConditionBase):
     def __str__(self):
         return "Enabled by product in category: "
 
-    enabling_categories = models.ForeignKey(Category)
+    enabling_category = models.ForeignKey(Category)
 
 
 @python_2_unicode_compatible
