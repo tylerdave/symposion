@@ -53,15 +53,6 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
         )
         cls.PROD_2.save()
 
-        cls.CEIL_1 = rego.TimeOrStockLimitEnablingCondition.objects.create(
-            description="Ceiling 1",
-            mandatory=True,
-            limit=9,
-        )
-        cls.CEIL_1.save()
-        cls.CEIL_1.products.add(cls.PROD_1, cls.PROD_2)
-        cls.CEIL_1.save()
-
     def test_get_cart(self):
         current_cart = CartController(self.USER_1)
 
@@ -125,6 +116,16 @@ class AddToCartTestCase(SetTimeMixin, TestCase):
 
 
     def test_add_to_cart_ceiling_limit(self):
+
+        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
+            description="Ceiling 1",
+            mandatory=True,
+            limit=9,
+        )
+        limit_ceiling.save()
+        limit_ceiling.products.add(self.PROD_1, self.PROD_2)
+        limit_ceiling.save()
+
         current_cart = CartController(self.USER_1)
 
         # User should not be able to add 10 of PROD_1 to the current cart
