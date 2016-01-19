@@ -36,17 +36,22 @@ class CartController(object):
         determine whether the cart has reserved the items and discounts it
         holds. '''
 
+        reservations = [datetime.timedelta()]
+
+        # If we have vouchers, we're entitled to an hour at minimum.
+        if len(self.cart.vouchers.all()) >= 1:
+            reservations.append(rego.Voucher.RESERVATION_DURATION)
+
         # Else, it's the maximum of the included products
         items = rego.ProductItem.objects.filter(cart=self.cart)
-
         agg = items.aggregate(Max("product__reservation_duration"))
-        max_reservation = agg["product__reservation_duration__max"]
+        product_max = agg["product__reservation_duration__max"]
 
-        # If we have discounts, we're entitled to an hour at minimum.
-        # TODO: implement voucher test
+        if product_max is not None:
+            reservations.append(product_max)
 
         self.cart.time_last_updated = timezone.now()
-        self.cart.reservation_duration = max_reservation
+        self.cart.reservation_duration = max(reservations)
 
 
     def add_to_cart(self, product, quantity):
@@ -78,6 +83,25 @@ class CartController(object):
         product_item.save()
 
         # TODO: Calculate discounts
+
+        self.extend_reservation()
+        self.cart.revision += 1
+        self.cart.save()
+
+
+    def apply_voucher(self, voucher):
+        ''' Applies the given voucher to this cart. '''
+
+        # TODO: is it valid for a cart to re-add a voucher that they have?
+
+        # Is voucher exhausted?
+        active_carts = rego.Cart.reserved_carts()
+        carts_with_voucher = active_carts.filter(vouchers=voucher)
+        if len(carts_with_voucher) >= voucher.limit:
+            raise ValidationError("This voucher is no longer available")
+
+        # If successful...
+        self.cart.vouchers.add(voucher)
 
         self.extend_reservation()
         self.cart.revision += 1
