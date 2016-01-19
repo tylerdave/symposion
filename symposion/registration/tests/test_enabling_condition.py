@@ -30,6 +30,19 @@ class EnablingConditionTestCases(RegistrationCartTestCase):
         enabling_condition.save()
 
 
+    def add_category_enabling_condition(cls):
+        ''' Adds a category enabling condition: adding PROD_1 to a cart is
+        predicated on adding an item from CAT_2 beforehand.'''
+        enabling_condition = rego.CategoryEnablingCondition.objects.create(
+            description="Category condition",
+            mandatory=False,
+            enabling_category=cls.CAT_2,
+        )
+        enabling_condition.save()
+        enabling_condition.products.add(cls.PROD_1)
+        enabling_condition.save()
+
+
     def test_product_enabling_condition_enables_product(self):
         self.add_product_enabling_condition()
 
@@ -42,11 +55,37 @@ class EnablingConditionTestCases(RegistrationCartTestCase):
         current_cart.add_to_cart(self.PROD_1, 1)
 
 
-    def test_product_enabled_by_previous_cart(self):
+    def test_product_enabled_by_product_in_previous_cart(self):
         self.add_product_enabling_condition()
 
         current_cart = CartController.for_user(self.USER_1)
         current_cart.add_to_cart(self.PROD_2, 1)
+        current_cart.cart.active = False
+        current_cart.cart.save()
+
+        # Create new cart and try to add PROD_1
+        current_cart = CartController.for_user(self.USER_1)
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+
+    def test_category_enabling_condition_enables_product(self):
+        self.add_category_enabling_condition()
+
+        # Cannot buy PROD_1 without buying PROD_2
+        current_cart = CartController.for_user(self.USER_1)
+        with self.assertRaises(ValidationError):
+            current_cart.add_to_cart(self.PROD_1, 1)
+
+        # PROD_3 is in CAT_2
+        current_cart.add_to_cart(self.PROD_3, 1)
+        current_cart.add_to_cart(self.PROD_1, 1)
+
+
+    def test_product_enabled_by_category_in_previous_cart(self):
+        self.add_category_enabling_condition()
+
+        current_cart = CartController.for_user(self.USER_1)
+        current_cart.add_to_cart(self.PROD_3, 1)
         current_cart.cart.active = False
         current_cart.cart.save()
 
