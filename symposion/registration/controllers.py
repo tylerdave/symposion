@@ -5,7 +5,7 @@ from collections import namedtuple
 from django.db.models import F, Q
 from symposion.registration import models as rego
 
-from enabling_condition import EnablingConditionController
+from conditions import EnablingConditionController
 
 DiscountEnabler = namedtuple("DiscountEnabler", ("discount", "condition", "value"))
 
