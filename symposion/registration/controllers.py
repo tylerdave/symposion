@@ -91,8 +91,9 @@ class ProductController(object):
 
         discounts = []
         for discount in potential_discounts:
-            # TODO test discount
-            if True:
+            real_discount = rego.DiscountBase.objects.get_subclass(pk=discount.discount.pk)
+            cond = ConditionController.for_condition(real_discount)
+            if cond.is_met(user, 0):
                 discounts.append(discount)
 
         return discounts

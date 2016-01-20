@@ -14,6 +14,7 @@ class ConditionController(object):
     def for_condition(condition):
         CONTROLLERS = {
             rego.CategoryEnablingCondition : CategoryConditionController,
+            rego.IncludedProductDiscount : ProductConditionController,
             rego.ProductEnablingCondition : ProductConditionController,
             rego.TimeOrStockLimitEnablingCondition :
                 TimeOrStockLimitConditionController,

@@ -33,6 +33,23 @@ class DiscountTestCase(RegistrationCartTestCase):
         return discount
 
 
+    @classmethod
+    def add_discount_prod_1_includes_cat_2(cls, amount=Decimal(100)):
+        discount = rego.IncludedProductDiscount.objects.create(
+            description="PROD_1 includes CAT_2 " + str(amount) + "%",
+        )
+        discount.save()
+        discount.enabling_products.add(cls.PROD_1)
+        discount.save()
+        rego.DiscountForCategory.objects.create(
+            discount=discount,
+            category=cls.CAT_2,
+            percentage=amount,
+            quantity=2
+        ).save()
+        return discount
+
+
     def test_discount_is_applied(self):
         discount = self.add_discount_prod_1_includes_prod_2()
 
@@ -42,6 +59,27 @@ class DiscountTestCase(RegistrationCartTestCase):
 
         # Discounts should be applied at this point...
         self.assertEqual(1, len(cart.cart.discountitem_set.all()))
+
+
+    def test_discount_is_applied_for_category(self):
+        discount = self.add_discount_prod_1_includes_cat_2()
+
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_1, 1)
+        cart.add_to_cart(self.PROD_3, 1)
+
+        # Discounts should be applied at this point...
+        self.assertEqual(1, len(cart.cart.discountitem_set.all()))
+
+
+    def test_discount_does_not_apply_if_not_met(self):
+        discount = self.add_discount_prod_1_includes_prod_2()
+
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_2, 1)
+
+        # No discount should be applied as the condition is not met
+        self.assertEqual(0, len(cart.cart.discountitem_set.all()))
 
 
     def test_discounts_collapse(self):
