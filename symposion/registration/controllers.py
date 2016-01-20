@@ -44,7 +44,7 @@ class ProductController(object):
 
         for condition in conditions:
             cond = ConditionController.for_condition(condition)
-            met = cond.user_can_add(user, self.product, quantity)
+            met = cond.is_met(user, quantity)
 
             if condition.mandatory and not met:
                 mandatory_violated = True

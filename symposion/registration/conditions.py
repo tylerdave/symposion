@@ -26,7 +26,7 @@ class ConditionController(object):
             return ConditionController()
 
 
-    def user_can_add(self, user, product, quantity):
+    def is_met(self, user, quantity):
         return True
 
 
@@ -35,7 +35,7 @@ class CategoryConditionController(ConditionController):
     def __init__(self, condition):
         self.condition = condition
 
-    def user_can_add(self, user, product, quantity):
+    def is_met(self, user, quantity):
         ''' returns True if the user has a product from a category that invokes
         this condition in one of their carts '''
 
@@ -54,7 +54,7 @@ class ProductConditionController(ConditionController):
     def __init__(self, condition):
         self.condition = condition
 
-    def user_can_add(self, user, product, quantity):
+    def is_met(self, user, quantity):
         ''' returns True if the user has a product that invokes this
         condition in one of their carts '''
 
@@ -72,13 +72,9 @@ class TimeOrStockLimitConditionController(ConditionController):
         self.ceiling = ceiling
 
 
-    def user_can_add(self, user, product, quantity):
+    def is_met(self, user, quantity):
         ''' returns True if adding _quantity_ of _product_ will not vioilate
         this ceiling. '''
-
-        # TODO capture products based on categories
-        if product not in self.ceiling.products.all():
-            return True
 
         # Test date range
         if not self.test_date_range():
@@ -130,7 +126,7 @@ class VoucherConditionController(ConditionController):
     def __init__(self, condition):
         self.condition = condition
 
-    def user_can_add(self, user, product, quantity):
+    def is_met(self, user, quantity):
         ''' returns True if the user has the given voucher attached. '''
         carts = rego.Cart.objects.filter(user=user,
             vouchers=self.condition.voucher)
