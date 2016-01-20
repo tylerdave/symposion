@@ -3,31 +3,34 @@ from django.utils import timezone
 from symposion.registration import models as rego
 
 
-class EnablingConditionController(object):
+class ConditionController(object):
+    ''' Base class for testing conditions that activate EnablingCondition
+    or Discount objects. '''
 
     def __init__(self):
         pass
 
-
     @staticmethod
     def for_condition(condition):
-        if isinstance(condition, rego.CategoryEnablingCondition):
-            return CategoryEnablingConditionController(condition)
-        elif isinstance(condition, rego.ProductEnablingCondition):
-            return ProductEnablingConditionController(condition)
-        if isinstance(condition, rego.TimeOrStockLimitEnablingCondition):
-            return TimeOrStockLimitEnablingConditionController(condition)
-        elif isinstance(condition, rego.VoucherEnablingCondition):
-            return VoucherEnablingConditionController(condition)
-        else:
-            return EnablingConditionController()
+        CONTROLLERS = {
+            rego.CategoryEnablingCondition : CategoryConditionController,
+            rego.ProductEnablingCondition : ProductConditionController,
+            rego.TimeOrStockLimitEnablingCondition :
+                TimeOrStockLimitConditionController,
+            rego.VoucherEnablingCondition : VoucherConditionController,
+        }
+
+        try:
+            return CONTROLLERS[type(condition)](condition)
+        except KeyError:
+            return ConditionController()
 
 
     def user_can_add(self, user, product, quantity):
         return True
 
 
-class CategoryEnablingConditionController(EnablingConditionController):
+class CategoryConditionController(ConditionController):
 
     def __init__(self, condition):
         self.condition = condition
@@ -44,7 +47,9 @@ class CategoryEnablingConditionController(EnablingConditionController):
         return len(products) > 0
 
 
-class ProductEnablingConditionController(EnablingConditionController):
+class ProductConditionController(ConditionController):
+    ''' Condition tests for ProductEnablingCondition and
+    IncludedProductDiscount. '''
 
     def __init__(self, condition):
         self.condition = condition
@@ -59,7 +64,9 @@ class ProductEnablingConditionController(EnablingConditionController):
         return len(products) > 0
 
 
-class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
+class TimeOrStockLimitConditionController(ConditionController):
+    ''' Condition tests for TimeOrStockLimit EnablingCondition and
+    Discount.'''
 
     def __init__(self, ceiling):
         self.ceiling = ceiling
@@ -117,7 +124,8 @@ class TimeOrStockLimitEnablingConditionController(EnablingConditionController):
         return True
 
 
-class VoucherEnablingConditionController(EnablingConditionController):
+class VoucherConditionController(ConditionController):
+    ''' Condition test for VoucherEnablingCondition and VoucherDiscount.'''
 
     def __init__(self, condition):
         self.condition = condition

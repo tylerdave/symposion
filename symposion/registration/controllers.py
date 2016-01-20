@@ -5,7 +5,7 @@ from collections import namedtuple
 from django.db.models import F, Q
 from symposion.registration import models as rego
 
-from conditions import EnablingConditionController
+from conditions import ConditionController
 
 DiscountEnabler = namedtuple("DiscountEnabler", ("discount", "condition", "value"))
 
@@ -43,7 +43,7 @@ class ProductController(object):
         non_mandatory_met = False
 
         for condition in conditions:
-            cond = EnablingConditionController.for_condition(condition)
+            cond = ConditionController.for_condition(condition)
             met = cond.user_can_add(user, self.product, quantity)
 
             if condition.mandatory and not met:
