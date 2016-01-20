@@ -87,3 +87,49 @@ class DiscountTestCase(RegistrationCartTestCase):
         # The full discount should be applied twice
         self.assertEqual(2, discount_items[1].quantity)
         self.assertEqual(discount_full.pk, discount_items[1].discount.pk)
+
+
+    def test_discount_applies_across_carts(self):
+        discount_full = self.add_discount_prod_1_includes_prod_2()
+
+        # Enable the discount during the first cart.
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_1, 1)
+        cart.cart.active = False
+        cart.cart.save()
+
+        # Use the discount in the second cart
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_2, 1)
+
+        # The discount should be applied.
+        self.assertEqual(1, len(cart.cart.discountitem_set.all()))
+        cart.cart.active = False
+        cart.cart.save()
+
+        # The discount should respect the total quantity across all
+        # of the user's carts.
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_2, 2)
+
+        # Having one item in the second cart leaves one more item where
+        # the discount is applicable. The discount should apply, but only for
+        # quantity=1
+        discount_items = list(cart.cart.discountitem_set.all())
+        self.assertEqual(1, discount_items[0].quantity)
+
+
+    def test_discount_applies_only_once_enabled(self):
+        # Enable the discount during the first cart.
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_1, 1)
+        cart.add_to_cart(self.PROD_2, 2) # This would exhaust discount if present
+        cart.cart.active = False
+        cart.cart.save()
+
+        discount_full = self.add_discount_prod_1_includes_prod_2()
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_2, 2)
+
+        discount_items = list(cart.cart.discountitem_set.all())
+        self.assertEqual(2, discount_items[0].quantity)

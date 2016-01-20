@@ -2,7 +2,7 @@ import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
-from django.db.models import Avg, Min, Max
+from django.db.models import Avg, Min, Max, Sum
 from django.utils import timezone
 
 from symposion.registration import models as rego
@@ -143,8 +143,22 @@ class CartController(object):
             if quantity == 0:
                 break
 
-            # TODO check past uses of this discount
+            # Get the count of past uses of this discount condition
+            # as this affects the total amount we're allowed to use now.
+            past_uses = rego.DiscountItem.objects.filter(
+                cart__active=False,
+                discount=discount.discount,
+                product=product,
+            )
+            agg = past_uses.aggregate(Sum("quantity"))
+            past_uses = agg["quantity__sum"]
+            if past_uses is None:
+                past_uses = 0
+            if past_uses == discount.condition.quantity:
+                continue
 
+            # Get a provisional instance for this DiscountItem
+            # with the quantity set to as much as we have in the cart
             try:
                 discount_item = rego.DiscountItem.objects.get(
                     product=product,
@@ -160,8 +174,9 @@ class CartController(object):
                     quantity=quantity,
                 )
 
+            # Truncate the quantity for this DiscountItem if we exceed quantity
             ours = discount_item.quantity
-            allowed = discount.condition.quantity
+            allowed = discount.condition.quantity - past_uses
             if ours > allowed:
                 discount_item.quantity = allowed
                 # Update the remaining quantity.
