@@ -18,6 +18,7 @@ class ConditionController(object):
             rego.ProductEnablingCondition : ProductConditionController,
             rego.TimeOrStockLimitEnablingCondition :
                 TimeOrStockLimitConditionController,
+            rego.VoucherDiscount : VoucherConditionController,
             rego.VoucherEnablingCondition : VoucherConditionController,
         }
 

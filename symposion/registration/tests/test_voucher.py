@@ -73,3 +73,25 @@ class VoucherTestCases(RegistrationCartTestCase):
         # Apply the voucher
         current_cart.apply_voucher(voucher)
         current_cart.add_to_cart(self.PROD_1, 1)
+
+
+    def test_voucher_enables_discount(self):
+        voucher = self.new_voucher()
+
+        discount = rego.VoucherDiscount.objects.create(
+            description="VOUCHER RECIPIENT",
+            voucher=voucher,
+        )
+        discount.save()
+        rego.DiscountForProduct.objects.create(
+            discount=discount,
+            product=self.PROD_1,
+            percentage=Decimal(100),
+            quantity=1
+        ).save()
+
+        # Having PROD_1 in place should add a discount
+        current_cart = CartController.for_user(self.USER_1)
+        current_cart.apply_voucher(voucher)
+        current_cart.add_to_cart(self.PROD_1, 1)
+        self.assertEqual(1, len(current_cart.cart.discountitem_set.all()))
