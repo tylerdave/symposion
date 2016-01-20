@@ -133,7 +133,7 @@ class CartController(object):
         # Validate the discounts
         discount_items = rego.DiscountItem.objects.filter(cart=self.cart)
         seen_discounts = set()
-        print discount_items
+
         for discount_item in discount_items:
             discount = discount_item.discount
             if discount in seen_discounts:
@@ -141,7 +141,7 @@ class CartController(object):
             seen_discounts.add(discount)
             real_discount = rego.DiscountBase.objects.get_subclass(pk=discount.pk)
             cond = ConditionController.for_condition(real_discount)
-            
+
             quantity = 0 if is_reserved else discount_item.quantity
 
             if not cond.is_met(self.cart.user, quantity):
