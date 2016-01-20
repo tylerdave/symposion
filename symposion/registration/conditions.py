@@ -111,7 +111,10 @@ class TimeOrStockLimitConditionController(ConditionController):
         ''' Abstracts away the product list, becuase enabling conditions
         list products differently to discounts. '''
         if isinstance(self.ceiling, rego.TimeOrStockLimitEnablingCondition):
-            return self.ceiling.products
+            category_products = rego.Product.objects.filter(
+                category=self.ceiling.categories.all()
+            )
+            return self.ceiling.products.all() | category_products
         else:
             categories = rego.Category.objects.filter(
                 discountforcategory__discount=self.ceiling

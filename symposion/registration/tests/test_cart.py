@@ -95,6 +95,20 @@ class RegistrationCartTestCase(SetTimeMixin, TestCase):
 
 
     @classmethod
+    def make_category_ceiling(cls, name, limit=None, start_time=None, end_time=None):
+        limit_ceiling = rego.TimeOrStockLimitEnablingCondition.objects.create(
+            description=name,
+            mandatory=True,
+            limit=limit,
+            start_time=start_time,
+            end_time=end_time
+        )
+        limit_ceiling.save()
+        limit_ceiling.categories.add(cls.CAT_1)
+        limit_ceiling.save()
+
+
+    @classmethod
     def make_discount_ceiling(cls, name, limit=None, start_time=None, end_time=None):
         limit_ceiling = rego.TimeOrStockLimitDiscount.objects.create(
             description=name,

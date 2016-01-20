@@ -18,6 +18,13 @@ class CeilingsTestCases(RegistrationCartTestCase):
 
     def test_add_to_cart_ceiling_limit(self):
         self.make_ceiling("Limit ceiling", limit=9)
+        self.__add_to_cart_test()
+
+    def test_add_to_cart_ceiling_category_limit(self):
+        self.make_category_ceiling("Limit ceiling", limit=9)
+        self.__add_to_cart_test()
+
+    def __add_to_cart_test(self):
 
         current_cart = CartController.for_user(self.USER_1)
 
@@ -29,13 +36,14 @@ class CeilingsTestCases(RegistrationCartTestCase):
         # User should be able to add 5 of PROD_1 to the current cart
         current_cart.add_to_cart(self.PROD_1, 5)
 
-        # User should not be able to add 10 of PROD_2 to the current cart
+        # User should not be able to add 6 of PROD_2 to the current cart
         # because it is affected by CEIL_1
         with self.assertRaises(ValidationError):
-            current_cart.add_to_cart(self.PROD_2, 10)
+            current_cart.add_to_cart(self.PROD_2, 6)
 
         # User should be able to add 5 of PROD_2 to the current cart
         current_cart.add_to_cart(self.PROD_2, 4)
+
 
     def test_add_to_cart_ceiling_date_range(self):
         self.make_ceiling("date range ceiling",
