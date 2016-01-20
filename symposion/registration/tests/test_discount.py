@@ -82,6 +82,17 @@ class DiscountTestCase(RegistrationCartTestCase):
         self.assertEqual(0, len(cart.cart.discountitem_set.all()))
 
 
+    def test_discount_applied_out_of_order(self):
+        discount = self.add_discount_prod_1_includes_prod_2()
+
+        cart = CartController.for_user(self.USER_1)
+        cart.add_to_cart(self.PROD_2, 1)
+        cart.add_to_cart(self.PROD_1, 1)
+
+        # No discount should be applied as the condition is not met
+        self.assertEqual(1, len(cart.cart.discountitem_set.all()))
+
+
     def test_discounts_collapse(self):
         discount = self.add_discount_prod_1_includes_prod_2()
 

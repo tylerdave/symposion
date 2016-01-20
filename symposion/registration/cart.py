@@ -82,7 +82,7 @@ class CartController(object):
             )
         product_item.save()
 
-        self.add_discount(product, quantity)
+        self.recalculate_discounts()
 
         self.extend_reservation()
         self.cart.revision += 1
@@ -130,7 +130,19 @@ class CartController(object):
         # TODO: recalculate discounts
 
 
-    def add_discount(self, product, quantity):
+    def recalculate_discounts(self):
+        ''' Calculates all of the discounts available for this product.
+        NB should be transactional, and it's terribly inefficient.
+        '''
+
+        # Delete the existing entries.
+        rego.DiscountItem.objects.filter(cart=self.cart).delete()
+
+        for item in self.cart.productitem_set.all():
+            self._add_discount(item.product, item.quantity)
+
+
+    def _add_discount(self, product, quantity):
         ''' Calculates the best available discounts for this product.
         NB this will be super-inefficient in aggregate because discounts will be
         re-tested for each product. We should work on that.'''
