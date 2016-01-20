@@ -136,13 +136,12 @@ class CartController(object):
         print discount_items
         for discount_item in discount_items:
             discount = discount_item.discount
-            #if discount in seen_discounts:
-            #    continue
+            if discount in seen_discounts:
+                continue
             seen_discounts.add(discount)
             real_discount = rego.DiscountBase.objects.get_subclass(pk=discount.pk)
             cond = ConditionController.for_condition(real_discount)
-            print cond
-
+            
             quantity = 0 if is_reserved else discount_item.quantity
 
             if not cond.is_met(self.cart.user, quantity):
