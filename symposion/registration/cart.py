@@ -190,20 +190,12 @@ class CartController(object):
 
             # Get a provisional instance for this DiscountItem
             # with the quantity set to as much as we have in the cart
-            try:
-                discount_item = rego.DiscountItem.objects.get(
-                    product=product,
-                    cart=self.cart,
-                    discount=discount.discount,
-                )
-                discount_item.quantity += quantity
-            except ObjectDoesNotExist:
-                discount_item = rego.DiscountItem.objects.create(
-                    product=product,
-                    cart=self.cart,
-                    discount=discount.discount,
-                    quantity=quantity,
-                )
+            discount_item = rego.DiscountItem.objects.create(
+                product=product,
+                cart=self.cart,
+                discount=discount.discount,
+                quantity=quantity,
+            )
 
             # Truncate the quantity for this DiscountItem if we exceed quantity
             ours = discount_item.quantity
@@ -214,4 +206,5 @@ class CartController(object):
                 quantity = ours - allowed
             else:
                 quantity = 0
+                
             discount_item.save()
