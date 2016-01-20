@@ -27,6 +27,26 @@ class InvoiceController(object):
 
         return InvoiceController(invoice)
 
+
+    @classmethod
+    def resolve_discount_value(cls, item):
+        try:
+            condition = rego.DiscountForProduct.objects.get(
+                discount=item.discount,
+                product=item.product
+            )
+        except ObjectDoesNotExist:
+            condition = rego.DiscountForCategory.objects.get(
+                discount=item.discount,
+                category=item.product.category
+            )
+        if condition.percentage is not None:
+            value = item.product.price * (condition.percentage / 100)
+        else:
+            value = condition.price
+        return value
+
+
     @classmethod
     def _generate(cls, cart):
         ''' Generates an invoice for the given cart. '''
@@ -40,6 +60,7 @@ class InvoiceController(object):
 
         # TODO: calculate line items.
         product_items = rego.ProductItem.objects.filter(cart=cart)
+        discount_items = rego.DiscountItem.objects.filter(cart=cart)
         invoice_value = Decimal()
         for item in product_items:
             line_item = rego.LineItem.objects.create(
@@ -47,6 +68,17 @@ class InvoiceController(object):
                 description=item.product.name,
                 quantity=item.quantity,
                 price=item.product.price,
+            )
+            line_item.save()
+            invoice_value += line_item.quantity * line_item.price
+
+        for item in discount_items:
+
+            line_item = rego.LineItem.objects.create(
+                invoice=invoice,
+                description=item.discount.description,
+                quantity=item.quantity,
+                price=cls.resolve_discount_value(item) * -1,
             )
             line_item.save()
             invoice_value += line_item.quantity * line_item.price

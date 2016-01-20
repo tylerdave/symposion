@@ -73,3 +73,36 @@ class InvoiceTestCase(RegistrationCartTestCase):
         # Asking for a cart should generate a new one
         new_cart = CartController.for_user(self.USER_1)
         self.assertNotEqual(current_cart.cart, new_cart.cart)
+
+
+    def test_invoice_includes_discounts(self):
+        voucher = rego.Voucher.objects.create(
+            recipient="Voucher recipient",
+            code="VOUCHER",
+            limit=1
+        )
+        voucher.save()
+        discount = rego.VoucherDiscount.objects.create(
+            description="VOUCHER RECIPIENT",
+            voucher=voucher,
+        )
+        discount.save()
+        rego.DiscountForProduct.objects.create(
+            discount=discount,
+            product=self.PROD_1,
+            percentage=Decimal(50),
+            quantity=1
+        ).save()
+
+        current_cart = CartController.for_user(self.USER_1)
+        current_cart.apply_voucher(voucher)
+
+        # Should be able to create an invoice after the product is added
+        current_cart.add_to_cart(self.PROD_1, 1)
+        invoice_1 = InvoiceController.for_cart(current_cart.cart)
+
+        # That invoice should have two line items
+        line_items = rego.LineItem.objects.filter(invoice=invoice_1.invoice)
+        self.assertEqual(2, len(line_items))
+        # That invoice should have a value equal to 50% of the cost of PROD_1
+        self.assertEqual(self.PROD_1.price * Decimal("0.5"), invoice_1.invoice.value)
