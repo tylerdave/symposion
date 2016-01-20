@@ -1,4 +1,5 @@
 from django.db.models import F, Q
+from django.db.models import Sum
 from django.utils import timezone
 
 from symposion.registration import models as rego
@@ -129,13 +130,16 @@ class TimeOrStockLimitConditionController(ConditionController):
         if self.ceiling.limit is None:
             return True
 
-        count = 0
-        product_items = rego.ProductItem.objects.filter(
-            product=self._products().all())
         reserved_carts = rego.Cart.reserved_carts()
-        for product_item in product_items:
-            if product_item.cart in reserved_carts:
-                count += product_item.quantity
+        product_items = rego.ProductItem.objects.filter(
+            product=self._products().all()
+        )
+        product_items = product_items.filter(cart=reserved_carts)
+
+        agg = product_items.aggregate(Sum("quantity"))
+        count = agg["quantity__sum"]
+        if count is None:
+            count = 0
 
         if count + quantity > self.ceiling.limit:
             return False
