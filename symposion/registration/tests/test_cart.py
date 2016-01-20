@@ -94,6 +94,23 @@ class RegistrationCartTestCase(SetTimeMixin, TestCase):
         limit_ceiling.save()
 
 
+    @classmethod
+    def make_discount_ceiling(cls, name, limit=None, start_time=None, end_time=None):
+        limit_ceiling = rego.TimeOrStockLimitDiscount.objects.create(
+            description=name,
+            start_time=start_time,
+            end_time=end_time,
+            limit=limit,
+        )
+        limit_ceiling.save()
+        rego.DiscountForProduct.objects.create(
+            discount=limit_ceiling,
+            product=cls.PROD_1,
+            percentage=100,
+            quantity=10,
+        ).save()
+
+
 class BasicCartTests(RegistrationCartTestCase):
 
     def test_get_cart(self):

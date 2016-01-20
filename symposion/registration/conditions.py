@@ -1,3 +1,4 @@
+from django.db.models import F, Q
 from django.utils import timezone
 
 from symposion.registration import models as rego
@@ -16,6 +17,8 @@ class ConditionController(object):
             rego.CategoryEnablingCondition : CategoryConditionController,
             rego.IncludedProductDiscount : ProductConditionController,
             rego.ProductEnablingCondition : ProductConditionController,
+            rego.TimeOrStockLimitDiscount :
+                TimeOrStockLimitConditionController,
             rego.TimeOrStockLimitEnablingCondition :
                 TimeOrStockLimitConditionController,
             rego.VoucherDiscount : VoucherConditionController,
@@ -104,13 +107,28 @@ class TimeOrStockLimitConditionController(ConditionController):
         return True
 
 
+    def _products(self):
+        ''' Abstracts away the product list, becuase enabling conditions
+        list products differently to discounts. '''
+        if isinstance(self.ceiling, rego.TimeOrStockLimitEnablingCondition):
+            return self.ceiling.products
+        else:
+            categories = rego.Category.objects.filter(
+                discountforcategory__discount=self.ceiling
+            )
+            return rego.Product.objects.filter(
+                Q(discountforproduct__discount=self.ceiling) |
+                Q(category=categories.all())
+            )
+
+
     def test_limits(self, quantity):
         if self.ceiling.limit is None:
             return True
 
         count = 0
         product_items = rego.ProductItem.objects.filter(
-            product=self.ceiling.products.all())
+            product=self._products().all())
         reserved_carts = rego.Cart.reserved_carts()
         for product_item in product_items:
             if product_item.cart in reserved_carts:

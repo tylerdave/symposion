@@ -101,7 +101,13 @@ class CeilingsTestCases(RegistrationCartTestCase):
 
     def test_validate_cart_fails_product_ceilings(self):
         self.make_ceiling("Limit ceiling", limit=1)
+        self.__validation_test()
 
+    def test_validate_cart_fails_product_discount_ceilings(self):
+        self.make_discount_ceiling("Limit ceiling", limit=1)
+        self.__validation_test()
+
+    def __validation_test(self):
         self.set_time(datetime.datetime(2015, 01, 01, tzinfo=UTC))
 
         first_cart = CartController.for_user(self.USER_1)

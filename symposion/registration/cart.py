@@ -1,4 +1,5 @@
 import datetime
+import itertools
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.exceptions import ValidationError
@@ -7,7 +8,9 @@ from django.utils import timezone
 
 from symposion.registration import models as rego
 
+from conditions import ConditionController
 from controllers import ProductController
+
 
 class CartController(object):
 
@@ -127,7 +130,24 @@ class CartController(object):
             if not prod.can_add_with_enabling_conditions(self.cart.user, quantity):
                 raise ValidationError("Products are no longer available")
 
-        # TODO: recalculate discounts
+        # Validate the discounts
+        discount_items = rego.DiscountItem.objects.filter(cart=self.cart)
+        seen_discounts = set()
+        print discount_items
+        for discount_item in discount_items:
+            discount = discount_item.discount
+            #if discount in seen_discounts:
+            #    continue
+            seen_discounts.add(discount)
+            real_discount = rego.DiscountBase.objects.get_subclass(pk=discount.pk)
+            cond = ConditionController.for_condition(real_discount)
+            print cond
+
+            quantity = 0 if is_reserved else discount_item.quantity
+
+            if not cond.is_met(self.cart.user, quantity):
+                raise ValidationError("Discounts are no longer available")
+
 
 
     def recalculate_discounts(self):
