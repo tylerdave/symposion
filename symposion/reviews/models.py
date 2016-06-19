@@ -28,7 +28,7 @@ def score_expression():
     )
 
     return Case(
-        When(vote_count=0, then=Value("0")),  # no divide by zero
+        When(vote_count=F("abstain"), then=Value("0")),  # no divide by zero
         default=score,
     )
 
@@ -270,30 +270,7 @@ class ProposalResult(models.Model):
     def full_calculate(cls):
         for proposal in ProposalBase.objects.all():
             result, created = cls._default_manager.get_or_create(proposal=proposal)
-            result.comment_count = Review.objects.filter(proposal=proposal).count()
-            result.vote_count = LatestVote.objects.filter(proposal=proposal).count()
-            result.abstain = LatestVote.objects.filter(
-                proposal=proposal,
-                vote=VOTES.ABSTAIN,
-            ).count()
-            result.plus_two = LatestVote.objects.filter(
-                proposal=proposal,
-                vote=VOTES.PLUS_TWO
-            ).count()
-            result.plus_one = LatestVote.objects.filter(
-                proposal=proposal,
-                vote=VOTES.PLUS_ONE
-            ).count()
-            result.minus_one = LatestVote.objects.filter(
-                proposal=proposal,
-                vote=VOTES.MINUS_ONE
-            ).count()
-            result.minus_two = LatestVote.objects.filter(
-                proposal=proposal,
-                vote=VOTES.MINUS_TWO
-            ).count()
-            result.save()
-            cls._default_manager.filter(pk=result.pk).update(score=score_expression())
+            result.update_vote()
 
     def update_vote(self, *a, **k):
         proposal = self.proposal
