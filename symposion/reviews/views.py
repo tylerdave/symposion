@@ -1,7 +1,10 @@
+import csv
 import random
+import StringIO
 
 from django.core.mail import send_mass_mail
 from django.db.models import Q
+from django.http import HttpResponse
 from django.http import HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template import Context, Template
@@ -105,6 +108,65 @@ def review_section(request, section_slug, assigned=False, reviewed="all"):
     }
 
     return render(request, "symposion/reviews/review_list.html", ctx)
+
+
+@login_required
+def review_all_proposals_csv(request):
+    ''' Returns a CSV representation of all of the proposals this user has
+    permisison to review. '''
+
+    response = HttpResponse("text/csv")
+    response['Content-Disposition'] = 'attachment; filename="proposals.csv"'
+    writer = csv.writer(response, quoting=csv.QUOTE_NONNUMERIC)
+
+    queryset = ProposalBase.objects.filter()
+
+    # The fields from each proposal object to report in the csv
+    fields = [
+        "id", "proposal_type", "speaker_name","speaker_email", "title",
+        "submitted", "other_speakers", "speaker_travel",
+        "speaker_accommodation", "cancelled", "status", "score", "total_votes",
+        "minus_two", "minus_one", "plus_one", "plus_two",
+    ]
+
+    # Fields are the heading
+    writer.writerow(fields)
+
+    for proposal in proposals_generator(request, queryset, check_speaker=False):
+
+        proposal.speaker_name = proposal.speaker.name
+        section_slug = proposal.kind.section.slug
+        kind_slug = proposal.kind.slug
+        proposal.proposal_type = kind_slug
+
+        proposal.other_speakers = ", ".join(
+            speaker.name
+            for speaker in proposal.additional_speakers.all()
+        )
+
+        proposal.speaker_travel = ", ".join(
+            str(bool(speaker.travel_assistance))
+            for speaker in proposal.speakers()
+        )
+
+        proposal.speaker_accommodation = ", ".join(
+            str(bool(speaker.accommodation_assistance))
+            for speaker in proposal.speakers()
+        )
+
+        if not request.user.has_perm("reviews.can_review_%s" % section_slug):
+            continue
+
+        csv_line = [getattr(proposal, field) for field in fields]
+
+        # Enusre that unicode items are handled properly.
+        for i, item in enumerate(csv_line):
+            if isinstance(item, unicode):
+                csv_line[i] = item.encode("utf8")
+
+        writer.writerow(csv_line)
+
+    return response
 
 
 @login_required
