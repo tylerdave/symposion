@@ -286,7 +286,7 @@ def review_admin(request, section_slug):
                     user=user,
                     proposal__kind__section__slug=section_slug,
                 ).count()
-
+                
                 user_votes = LatestVote.objects.filter(
                     user=user,
                     proposal__kind__section__slug=section_slug,
@@ -314,15 +314,18 @@ def review_admin(request, section_slug):
                     user.average = "-"
                 else:
                     user.average = (
-                        user.plus_two + user.plus_one +
-                        user.minus_one + user.minus_two
+                        ((user.plus_two * 2) + user.plus_one) -
+                        ((user.minus_two * 2) + user.minus_one)
                     ) / (user.total_votes * 1.0)
 
                 yield user
 
+    reviewers_sorted = list(reviewers())
+    reviewers_sorted.sort(key= lambda reviewer: 0 - reviewer.total_votes)
+
     ctx = {
         "section_slug": section_slug,
-        "reviewers": reviewers(),
+        "reviewers": reviewers_sorted,
     }
     return render(request, "symposion/reviews/review_admin.html", ctx)
 
