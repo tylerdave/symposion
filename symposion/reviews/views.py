@@ -221,16 +221,24 @@ def review_random_proposal(request, section_slug):
 
     # Direct reviewers to underreviewed proposals
     too_few_set = REVIEW_STATUS_FILTERS[TOO_FEW](queryset)
-    indifferent_set = REVIEW_STATUS_FILTERS[INDIFFERENT](queryset)
+    controversial_set = REVIEW_STATUS_FILTERS[CONTROVERSIAL](queryset)
 
     if len(too_few_set) > 0:
-        queryset = too_few_set
-    elif len(indifferent_set) > 0:
-        queryset = indifferent_set
+        proposals = too_few_set.all()
+    elif len(controversial_set) > 0 and random.random() < 0.2:
+        proposals = controversial_set.all()
+    else:
+        # Select a proposal with less than the median number of total votes
+        proposals = proposals_generator(request, queryset, check_speaker=False)
+        proposals = list(proposals)
+        proposals.sort(key = lambda proposal: proposal.total_votes)
+        # The first half is the median or less.
+        # The +1 means we round _up_.
+        proposals = proposals[:(len(proposals) + 1) / 2]
 
     # Realistically, there shouldn't be all that many proposals to choose
     # from, so this should be cheap.
-    chosen = random.choice(queryset.all())
+    chosen = random.choice(proposals)
     return redirect("review_detail", pk=chosen.pk)
 
 
@@ -274,13 +282,16 @@ def review_admin(request, section_slug):
                     continue
                 already_seen.add(user.pk)
 
-                user.comment_count = Review.objects.filter(user=user).count()
+                user.comment_count = Review.objects.filter(
+                    user=user,
+                    proposal__kind__section__slug=section_slug,
+                ).count()
+
                 user_votes = LatestVote.objects.filter(
                     user=user,
                     proposal__kind__section__slug=section_slug,
                 )
-                print section_slug
-                print [vote.proposal.kind.section.slug for vote in user_votes]
+
                 user.total_votes = user_votes.exclude(
                     vote=LatestVote.VOTES.ABSTAIN,
                 ).count()
@@ -342,7 +353,7 @@ def review_detail(request, pk):
         if request.user in speakers:
             return access_not_permitted(request)
 
-        if "vote_submit" in request.POST:
+        if "vote_submit" in request.POST or "vote_submit_and_random" in request.POST:
             review_form = ReviewForm(request.POST)
             if review_form.is_valid():
 
@@ -351,7 +362,13 @@ def review_detail(request, pk):
                 review.proposal = proposal
                 review.save()
 
-                return redirect(request.path)
+                if "vote_submit_and_random" in request.POST:
+                    next_page = redirect("user_random", proposal.kind.section.slug)
+                    next_page["Location"] += "#invalid_fragment"  # Hack.
+                else:
+                    next_page = redirect(request.path)
+
+                return next_page
             else:
                 message_form = SpeakerCommentForm()
         elif "message_submit" in request.POST and admin:
