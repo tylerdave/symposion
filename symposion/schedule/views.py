@@ -1,21 +1,25 @@
 from __future__ import unicode_literals
 import json
+import pytz
 
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader, Context
+from django.conf import settings
 
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.sites.models import Site
+
+from django_ical.views import ICalFeed
 
 from account.decorators import login_required
 
 from symposion.schedule.forms import SlotEditForm, ScheduleSectionForm
 from symposion.schedule.models import Schedule, Day, Slot, Presentation, Session, SessionRole
 from symposion.schedule.timetable import TimeTable
-
+from symposion.conference.models import Conference
 
 def fetch_schedule(slug):
     qs = Schedule.objects.all()
@@ -256,6 +260,57 @@ def schedule_json(request):
         content_type="application/json"
     )
 
+class EventFeed(ICalFeed):
+
+    product_id = '-//linux.conf.au/schedule//EN'
+    timezone = settings.TIME_ZONE
+    filename = 'conference.ics'
+    def description(self):
+        return Conference.objects.all().first().title
+
+    def items(self):
+        return Slot.objects.filter(
+            day__schedule__published=True,
+            day__schedule__hidden=False
+        ).exclude(
+            kind__label='shortbreak'
+        ).order_by("start")
+
+    def item_title(self, item):
+        if hasattr(item.content, 'proposal'):
+            title =  item.content.title
+        else:
+            title = item.kind if item.kind else "Slot"
+        return title
+
+    def item_description(self, item):
+        if hasattr(item.content, 'proposal'):
+            description = "Speaker: %s\n%s" % (
+                item.content.speaker, item.content.abstract)
+        else:
+            description = item.content_override if item.content_override else "No description"
+        return description
+
+    def item_start_datetime(self, item):
+        return pytz.timezone(settings.TIME_ZONE).localize(item.start_datetime)
+
+    def item_end_datetime(self, item):
+        return pytz.timezone(settings.TIME_ZONE).localize(item.end_datetime)
+
+    def item_location(self, item):
+        return ", ".join(room["name"] for room in item.rooms.values())
+
+    def item_link(self, item):
+        if hasattr(item.content, 'proposal'):
+            return 'http://%s%s' % (
+                                    Site.objects.get_current().domain,
+                                    reverse('schedule_presentation_detail', args=[item.content.pk])
+                                    )
+        else:
+            return 'http://%s' % Site.objects.get_current().domain
+    
+    def item_guid(self, item):
+        return '%d@%s' % (item.pk, Site.objects.get_current().domain)
 
 def session_list(request):
     sessions = Session.objects.all().order_by('pk')
