@@ -1,6 +1,6 @@
 Django>=1.9.2
 django-appconf==1.0.1
-django-model-utils==2.4.0
+django-model-utils==3.0.0
 django-reversion==1.10.1
 django-sitetree==1.5.1
 django-taggit==0.18.0
