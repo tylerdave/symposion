@@ -15,6 +15,10 @@ class Migration(migrations.Migration):
         ('symposion_proposals', '0001_initial'),
     ]
 
+    run_before = [
+        ('symposion_speakers', '0003_auto_20170810_1644'),
+    ]
+
     operations = [
         migrations.CreateModel(
             name='Day',

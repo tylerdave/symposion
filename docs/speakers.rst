@@ -47,6 +47,19 @@ following:
 - In your site's `settings.py` file, add a setting for
   `SYMPOSION_SPEAKER_FORM`
 
+If you're migrating from an older version of Symposion and your app has
+migrations that depend upon `Speaker`, you may have difficulty applying those
+migrations in future.
+
+Adding the following line to any migration that currently depends on
+`symposion_speakers` *should* help.
+
+```
+    run_before = [
+        ('symposion_speakers', '0003_auto_20170810_1644'),
+    ]
+```
+
 
 
 Migrating your customized Symposion speaker models
