@@ -25,6 +25,7 @@ from symposion.proposals.models import (
 from symposion.proposals.models import SupportingDocument, AdditionalSpeaker
 from symposion.speakers.models import speaker_model
 from symposion.utils.loader import import_named_object
+from symposion.utils import anonymous_review
 from symposion.utils.mail import send_email
 
 from symposion.proposals.forms import (
@@ -207,10 +208,16 @@ def proposal_edit(request, pk):
                     Q(proposalmessage__proposal=proposal)
                 )
                 users = users.exclude(id=request.user.id).distinct()
+
+                message_user = request.user
+
+                if proposal.anonymous_review():
+                    message_user = anonymous_review.Parrot("A Speaker")
+
                 for user in users:
                     ctx = {
-                        "user": request.user,
-                        "proposal": proposal,
+                        "user": message_user,
+                        "proposal": proposal.redacted(),
                     }
                     send_email(
                         [user.email], "proposal_updated",
@@ -236,6 +243,7 @@ def proposal_detail(request, pk):
     if request.user not in [p.user for p in proposal.speakers()]:
         raise Http404()
 
+    # TODO Why on earth is this not using a Signal?
     if "symposion.reviews" in settings.INSTALLED_APPS:
         from symposion.reviews.forms import SpeakerCommentForm
         message_form = SpeakerCommentForm()
@@ -259,8 +267,8 @@ def proposal_detail(request, pk):
 
                 for reviewer in reviewers:
                     ctx = {
-                        "proposal": proposal,
-                        "message": message,
+                        "proposal": proposal.redacted(),
+                        "message": message.redacted(),
                         "reviewer": True,
                     }
                     send_email(
