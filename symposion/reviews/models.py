@@ -343,9 +343,9 @@ class Comment(models.Model):
 
 class NotificationTemplate(models.Model):
 
-    label = models.CharField(max_length=100, verbose_name=_("Label"))
+    label = models.CharField(max_length=256, verbose_name=_("Label"))
     from_address = models.EmailField(verbose_name=_("From address"))
-    subject = models.CharField(max_length=100, verbose_name=_("Subject"))
+    subject = models.CharField(max_length=256, verbose_name=_("Subject"))
     body = models.TextField(verbose_name=_("Body"))
 
     class Meta:
