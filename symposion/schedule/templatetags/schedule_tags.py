@@ -14,7 +14,7 @@ def speakers(slug=None):
     """
     {% speakers as speakers %}
     """
-    speaker_iters = list(i.speakers() for i in models.Presentation.objects.all())
+    speaker_iters = list(i.speakers() for i in models.Presentation.objects.filter(cancelled=False))
     speakers = chain(*speaker_iters)
     speakers = list(speakers)
 
