@@ -189,6 +189,14 @@ def schedule_presentation_detail(request, pk):
 
 
 def schedule_json(request):
+    return HttpResponse(
+        json.dumps({"schedule": _schedule_json(request)}),
+        content_type="application/json"
+    )
+
+def _schedule_json(request):
+    ''' Produce the dictionary object for jsonifying '''
+
     slots = Slot.objects.filter(
         day__schedule__published=True,
         day__schedule__hidden=False
@@ -196,6 +204,7 @@ def schedule_json(request):
 
     protocol = request.META.get('HTTP_X_FORWARDED_PROTO', 'http')
     data = []
+
     for slot in slots:
         slot_data = {
             "room": ", ".join(room["name"] for room in slot.rooms.values()),
@@ -214,8 +223,6 @@ def schedule_json(request):
             "tags": "",
             "released": True,
             "contact": [],
-
-
         }
         if hasattr(slot.content, "proposal"):
             slot_data.update({
@@ -239,10 +246,7 @@ def schedule_json(request):
             })
         data.append(slot_data)
 
-    return HttpResponse(
-        json.dumps({"schedule": data}),
-        content_type="application/json"
-    )
+    return data
 
 
 def session_list(request):
