@@ -72,7 +72,7 @@ def proposals_generator(request, queryset, user_pk=None, check_speaker=True):
 @login_required
 def review_section(request, section_slug, assigned=False, reviewed="all"):
 
-    if not request.user.has_perm("reviews.can_review_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_review_%s" % section_slug):
         return access_not_permitted(request)
 
     section = get_object_or_404(ProposalSection, section__slug=section_slug)
@@ -112,7 +112,7 @@ def review_list(request, section_slug, user_pk):
 
     # if they're not a reviewer admin and they aren't the person whose
     # review list is being asked for, don't let them in
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         if not request.user.pk == user_pk:
             return access_not_permitted(request)
 
@@ -121,7 +121,7 @@ def review_list(request, section_slug, user_pk):
     queryset = queryset.filter(pk__in=reviewed)
     proposals = queryset.order_by("submitted")
 
-    admin = request.user.has_perm("reviews.can_manage_%s" % section_slug)
+    admin = request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug)
 
     proposals = proposals_generator(request, proposals, user_pk=user_pk, check_speaker=not admin)
 
@@ -134,7 +134,7 @@ def review_list(request, section_slug, user_pk):
 @login_required
 def review_admin(request, section_slug):
 
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         return access_not_permitted(request)
 
     def reviewers():
@@ -182,7 +182,7 @@ def review_detail(request, pk):
     proposals = ProposalBase.objects.select_related("result").select_subclasses()
     proposal = get_object_or_404(proposals, pk=pk)
 
-    if not request.user.has_perm("reviews.can_review_%s" % proposal.kind.section.slug):
+    if not request.user.has_perm("symposion_reviews.can_review_%s" % proposal.kind.section.slug):
         return access_not_permitted(request)
 
     speakers = [s.user for s in proposal.speakers()]
@@ -302,7 +302,7 @@ def review_delete(request, pk):
     review = get_object_or_404(Review, pk=pk)
     section_slug = review.section.slug
 
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         return access_not_permitted(request)
 
     review = get_object_or_404(Review, pk=pk)
@@ -314,7 +314,7 @@ def review_delete(request, pk):
 @login_required
 def review_status(request, section_slug=None, key=None):
 
-    if not request.user.has_perm("reviews.can_review_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_review_%s" % section_slug):
         return access_not_permitted(request)
 
     VOTE_THRESHOLD = settings.SYMPOSION_VOTE_THRESHOLD
@@ -351,7 +351,7 @@ def review_status(request, section_slug=None, key=None):
         .order_by("result__vote_count"),
     }
 
-    admin = request.user.has_perm("reviews.can_manage_%s" % section_slug)
+    admin = request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug)
 
     for status in proposals:
         if key and key != status:
@@ -397,7 +397,7 @@ def review_assignment_opt_out(request, pk):
 
 @login_required
 def review_bulk_accept(request, section_slug):
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         return access_not_permitted(request)
     if request.method == "POST":
         form = BulkPresentationForm(request.POST)
@@ -418,7 +418,7 @@ def review_bulk_accept(request, section_slug):
 
 @login_required
 def result_notification(request, section_slug, status):
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         return access_not_permitted(request)
 
     proposals = ProposalBase.objects.filter(kind__section__slug=section_slug, result__status=status).select_related("speaker__user", "result").select_subclasses()
@@ -438,7 +438,7 @@ def result_notification_prepare(request, section_slug, status):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         return access_not_permitted(request)
 
     proposal_pks = []
@@ -476,7 +476,7 @@ def result_notification_send(request, section_slug, status):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
 
-    if not request.user.has_perm("reviews.can_manage_%s" % section_slug):
+    if not request.user.has_perm("symposion_reviews.can_manage_%s" % section_slug):
         return access_not_permitted(request)
 
     if not all([k in request.POST for k in ["proposal_pks", "from_address", "subject", "body"]]):
