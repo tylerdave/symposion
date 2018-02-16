@@ -9,11 +9,10 @@ from symposion.proposals.models import ProposalSection
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        ct, created = ContentType.objects.get_or_create(
-            model="",
-            app_label="reviews",
-            defaults={"name": "reviews"}
-        )
+        ct = ContentType.objects.get(
+                app_label="symposion_reviews",
+                model="review"
+                )
 
         for ps in ProposalSection.objects.all():
             for action in ["review", "manage"]:
